@@ -1,5 +1,5 @@
 {
-  "$schema": "./client/node_modules/@biomejs/biome/configuration_schema.json",
+  "$schema": "./server/node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
     "ignore": [
       "client/dist/**"
@@ -7,5 +7,13 @@
   },
   "formatter": {
     "indentStyle": "space"
+  },
+  "linter": {
+    "rules": {
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noAssignInExpressions": "off"
+      }
+    }
   }
 }

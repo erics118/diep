@@ -30,10 +30,10 @@ export class GameRoom extends Room<MyRoomState> {
     });
   }
 
-  fixedTick(timeStep: number) {
+  fixedTick(_timeStep: number) {
     const velocity = 2;
 
-    this.state.players.forEach((player) => {
+    for (const [_, player] of this.state.players) {
       let input: InputData;
 
       // dequeue player inputs
@@ -52,7 +52,7 @@ export class GameRoom extends Room<MyRoomState> {
 
         player.tick = input.tick;
       }
-    });
+    }
   }
 
   onJoin(client: Client, _options: any) {
