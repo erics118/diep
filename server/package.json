@@ -33,7 +33,6 @@
     "format": "biome format --write ./src",
     "lint": "biome lint ./src",
     "fix": "biome check --apply ./src",
-    "ci": "biome ci ./src",
-    "prepare": "husky"
+    "ci": "biome ci ./src"
   }
 }
