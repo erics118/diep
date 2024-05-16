@@ -8,6 +8,6 @@ RUN npm install --omit=dev
 
 COPY server/ .
 
-RUN tsc
+RUN npm run build
 
 CMD [ "node", "lib/index.js" ]
