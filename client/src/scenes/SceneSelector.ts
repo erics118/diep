@@ -14,7 +14,7 @@ export class SceneSelector extends Phaser.Scene {
     graphics.fillStyle(0x0000ff, 1.0);
     graphics.fillCircle(25, 25, 25); 
 
-    graphics.generateTexture('redCircle', 50, 50);
+    graphics.generateTexture('playerCircle', 50, 50);
   }
 
   create() {
