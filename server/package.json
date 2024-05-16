@@ -6,6 +6,7 @@
   "license": "MIT",
   "main": "lib/index.js",
   "devDependencies": {
+    "@biomejs/biome": "^1.7.3",
     "@colyseus/loadtest": "^0.15.1",
     "@colyseus/testing": "^0.15.2",
     "@types/cors": "^2.8.6",
