@@ -17,8 +17,8 @@
     "typescript": "^5.4.5"
   },
   "scripts": {
-    "start": "parcel serve index.html",
-    "build": "parcel build index.html",
+    "start": "parcel serve public/index.html",
+    "build": "parcel build public/index.html",
     "format": "biome format --write ./src",
     "lint": "biome lint ./src",
     "fix": "biome check --apply ./src",
