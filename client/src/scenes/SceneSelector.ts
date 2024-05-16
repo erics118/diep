@@ -18,12 +18,6 @@ export class SceneSelector extends Phaser.Scene {
   }
 
   create() {
-    // automatically navigate to hash scene if provided
-    if (window.location.hash) {
-      this.runScene(window.location.hash.substring(1));
-      return;
-    }
-
     const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
       color: "#ff0000",
       fontSize: "32px",
