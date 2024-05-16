@@ -21,7 +21,7 @@ export default config({
     /**
      * Define your room handlers:
      */
-    gameServer.define("part4_room", GameRoom);
+    gameServer.define("diep_room", GameRoom);
 
     //
     // keep gameServer reference, so we can

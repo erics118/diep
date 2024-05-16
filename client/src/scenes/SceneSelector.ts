@@ -1,10 +1,6 @@
 import Phaser from "phaser";
 
 export class SceneSelector extends Phaser.Scene {
-  parts = {
-    "4": "Fixed Tickrate",
-  };
-
   constructor() {
     super({ key: "selector", active: true });
   }
@@ -31,19 +27,13 @@ export class SceneSelector extends Phaser.Scene {
       fontFamily: "Arial",
     };
 
-    for (const partNum in this.parts) {
-      const index = Number.parseInt(partNum) - 1;
-      const label = this.parts[partNum];
-
-      // this.add.text(32, 32 + 32 * index, `Part ${partNum}: ${label}`, textStyle)
-      this.add
-        .text(130, 150 + 70 * index, `Part ${partNum}: ${label}`, textStyle)
-        .setInteractive()
-        .setPadding(6)
-        .on("pointerdown", () => {
-          this.runScene(`part${partNum}`);
-        });
-    }
+    this.add
+      .text(130, 220, `Start Game`, textStyle)
+      .setInteractive()
+      .setPadding(6)
+      .on("pointerdown", () => {
+        this.runScene(`diep`);
+      });
   }
 
   runScene(key: string) {

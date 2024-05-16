@@ -42,7 +42,7 @@ export class Scene extends Phaser.Scene {
   currentTick = 0;
 
   constructor() {
-    super({ key: "part4" });
+    super({ key: "diep" });
   }
 
   async create() {
@@ -106,7 +106,7 @@ export class Scene extends Phaser.Scene {
     const client = new Client(BACKEND_URL);
 
     try {
-      this.room = await client.joinOrCreate("part4_room", {});
+      this.room = await client.joinOrCreate("diep_room", {});
 
       // connection successful!
       connectionStatusText.destroy();
