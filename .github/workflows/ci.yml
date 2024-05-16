@@ -20,4 +20,4 @@ jobs:
 
       - name: Client
         working-directory: ./client
-        run: biome 
+        run: npm run ci
