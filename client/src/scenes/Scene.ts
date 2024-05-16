@@ -53,7 +53,8 @@ export class Scene extends Phaser.Scene {
     await this.connect();
 
     this.room.state.players.onAdd((player, sessionId) => {
-      const entity = this.physics.add.image(player.x, player.y, "ship");
+
+      const entity = this.physics.add.image(player.x, player.y, "playerCircle");
       this.playerEntities[sessionId] = entity;
 
       // is current player
