@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import ship from "../../public/ship.png"
+
 export class SceneSelector extends Phaser.Scene {
   constructor() {
     super({ key: "selector", active: true });
@@ -12,9 +12,9 @@ export class SceneSelector extends Phaser.Scene {
     const graphics = this.make.graphics({ x: 0, y: 0 });
 
     graphics.fillStyle(0x0000ff, 1.0);
-    graphics.fillCircle(25, 25, 25); 
+    graphics.fillCircle(25, 25, 25);
 
-    graphics.generateTexture('playerCircle', 50, 50);
+    graphics.generateTexture("playerCircle", 50, 50);
   }
 
   create() {
@@ -27,16 +27,15 @@ export class SceneSelector extends Phaser.Scene {
     const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
       color: "#ff0000",
       fontSize: "32px",
-      // fontSize: "24px",
       fontFamily: "Arial",
     };
 
     this.add
-      .text(130, 220, `Start Game`, textStyle)
+      .text(130, 220, "Start Game", textStyle)
       .setInteractive()
       .setPadding(6)
       .on("pointerdown", () => {
-        this.runScene(`diep`);
+        this.runScene("diep");
       });
   }
 
