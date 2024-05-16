@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-
+import ship from "../../public/ship.png"
 export class SceneSelector extends Phaser.Scene {
   constructor() {
     super({ key: "selector", active: true });
@@ -9,8 +9,12 @@ export class SceneSelector extends Phaser.Scene {
     // update menu background color
     this.cameras.main.setBackgroundColor(0x000000);
 
-    // preload demo assets
-    this.load.image("ship", "../ship.png");
+    const graphics = this.make.graphics({ x: 0, y: 0 });
+
+    graphics.fillStyle(0x0000ff, 1.0);
+    graphics.fillCircle(25, 25, 25); 
+
+    graphics.generateTexture('redCircle', 50, 50);
   }
 
   create() {
