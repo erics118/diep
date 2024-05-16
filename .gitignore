@@ -1,8 +1,7 @@
-client/dist/*.js
-client/dist/*.map
 .devmode.json
 
 lib/
+dist/
 
 # Logs
 logs

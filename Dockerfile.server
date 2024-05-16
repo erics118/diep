@@ -2,12 +2,12 @@ FROM node:20
 
 WORKDIR /app
 
-COPY client/package*.json ./
+COPY server/package*.json ./
 
 RUN npm ci
 
-COPY client/ .
+COPY server/ .
 
 RUN npm run build
 
-CMD [ "npm", "run", "start" ]
+CMD [ "node", "lib/index.js" ]

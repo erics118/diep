@@ -8,6 +8,7 @@ import basicAuth from "express-basic-auth";
  * Import your Room files
  */
 import { GameRoom } from "./rooms/GameRoom";
+import path from "node:path";
 
 let gameServerRef: Server;
 
@@ -34,7 +35,7 @@ export default config({
      * Bind your custom express routes here:
      */
     app.get("/", (req, res) => {
-      res.send("It's time to kick ass and chew bubblegum!");
+      res.sendFile(path.join(__dirname , "../public/index.html"));
     });
 
     const basicAuthMiddleware = basicAuth({
