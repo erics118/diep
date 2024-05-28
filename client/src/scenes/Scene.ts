@@ -1,7 +1,7 @@
 import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
+import { BACKEND_URL, colors } from "../config";
 import type { Keys } from "../types";
-import { BACKEND_URL, DEBUG, colors } from "../config";
 
 const MAP_SIZE = 5000;
 const MINIMAP_SIZE = 200;
