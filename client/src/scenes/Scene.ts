@@ -1,7 +1,7 @@
 import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
 import { BACKEND_URL, colors } from "../config";
-import type { Keys } from "../types";
+import type { Bullet, Keys } from "../types";
 
 const MAP_SIZE = 5000;
 const MINIMAP_SIZE = 200;
@@ -42,7 +42,11 @@ export class Scene extends Phaser.Scene {
 
   currentTick = 0;
 
-  pointerLocation: { x: number, y: number }
+  pointerLocation: { x: number; y: number };
+
+  bullets: Bullet[] = [];
+  reloadTicks = 20;
+  lastBulletTick = 0;
 
   constructor() {
     super({ key: "diep" });
@@ -58,15 +62,16 @@ export class Scene extends Phaser.Scene {
     playerCircle.fillRect(40, 20, 10, 10);
     playerCircle.generateTexture("playerCircle", 50, 50);
 
+    const playerBullet = this.make.graphics({ x: 0, y: 0 });
+    playerBullet.fillStyle(colors.playerBullet, 1.0);
+    playerBullet.fillCircle(6, 6, 6);
+    playerBullet.generateTexture("playerBullet", 12, 12);
+
     const enemyCircle = this.make.graphics({ x: 0, y: 0 });
     enemyCircle.fillStyle(colors.enemy, 1.0);
     enemyCircle.fillCircle(25, 25, 20);
     enemyCircle.generateTexture("enemyCircle", 50, 50);
 
-    const bullet = this.make.graphics({ x: 0, y: 0 });
-    bullet.fillStyle(colors.playerBullet, 1.0);
-    bullet.fillCircle(10, 10, 10);
-    bullet.generateTexture("bullet", 10, 10);
     this.load.image(
       "cursor",
       "https://labs.phaser.io/assets/sprites/drawcursor.png",
@@ -101,7 +106,7 @@ export class Scene extends Phaser.Scene {
     // register pointer move event
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       this.pointerLocation = { x: pointer.worldX, y: pointer.worldY };
-      this.cursor.setVisible(true).setX(pointer.worldX).setY(pointer.worldY);
+      this.cursor.setX(pointer.worldX).setY(pointer.worldY);
 
       this.cursorGraphics.clear();
 
@@ -114,7 +119,7 @@ export class Scene extends Phaser.Scene {
         this.currentPlayer.x,
         this.currentPlayer.y,
         pointer.worldX,
-        pointer.worldY
+        pointer.worldY,
       );
       this.currentPlayer.setRotation(pointerAngle);
     });
@@ -191,7 +196,7 @@ export class Scene extends Phaser.Scene {
         entity.setCollideWorldBounds(true);
 
         // make camera follow it
-        this.cameras.main.startFollow(entity, true, 0.5, 0.5);
+        this.cameras.main.startFollow(entity, true, 0.08, 0.08);
 
         // create local and remote debug rectangles
         this.localRef = this.add.rectangle(0, 0, entity.width, entity.height);
@@ -281,10 +286,6 @@ export class Scene extends Phaser.Scene {
   fixedTick(_time: number, _delta: number) {
     this.currentTick++;
 
-    // const currentPlayerRemote = this.room.state.players.get(this.room.sessionId);
-    // const ticksBehind = this.currentTick - currentPlayerRemote.tick;
-    // console.log({ ticksBehind });
-
     const velocity = 2;
     this.inputPayload.up = this.keys.up.isDown || this.keys.w.isDown;
     this.inputPayload.down = this.keys.down.isDown || this.keys.s.isDown;
@@ -293,8 +294,28 @@ export class Scene extends Phaser.Scene {
 
     this.inputPayload.tick = this.currentTick;
 
+    if (
+      this.keys.space.isDown &&
+      this.lastBulletTick + this.reloadTicks < this.currentTick
+    ) {
+      const entity = this.physics.add.image(
+        this.currentPlayer.x,
+        this.currentPlayer.y,
+        "playerBullet",
+      );
+
+      this.bullets.push({
+        body: entity,
+        angle: this.currentPlayer.rotation,
+        speed: 5,
+        health: 100,
+      });
+      this.lastBulletTick = this.currentTick;
+    }
+
     this.room.send(0, this.inputPayload);
 
+    // move player
     if (this.inputPayload.left) {
       this.currentPlayer.x -= velocity;
     } else if (this.inputPayload.right) {
@@ -307,27 +328,47 @@ export class Scene extends Phaser.Scene {
       this.currentPlayer.y += velocity;
     }
 
+    // move bullets
+    for (let i = this.bullets.length - 1; i >= 0; i--) {
+      const bullet = this.bullets[i];
+      bullet.body.x += bullet.speed * Math.cos(bullet.angle);
+      bullet.body.y += bullet.speed * Math.sin(bullet.angle);
+      bullet.health -= 1;
+      // remove the bullet from the list
+      if (bullet.health <= 0) {
+        bullet.body.destroy();
+        this.bullets.splice(i, 1);
+      }
+    }
+
+    // move pointer with the player
+    if (this.inputPayload.left) {
+      this.pointerLocation.x -= velocity;
+    } else if (this.inputPayload.right) {
+      this.pointerLocation.x += velocity;
+    }
+
+    if (this.inputPayload.up) {
+      this.pointerLocation.y -= velocity;
+    } else if (this.inputPayload.down) {
+      this.pointerLocation.y += velocity;
+    }
+
+    this.cursor.setX(this.pointerLocation.x).setY(this.pointerLocation.y);
+
+    this.cursorGraphics.clear();
+
+    this.cursorGraphics.beginPath();
+    this.cursorGraphics.moveTo(this.currentPlayer.x, this.currentPlayer.y);
+    this.cursorGraphics.lineTo(this.pointerLocation.x, this.pointerLocation.y);
+    this.cursorGraphics.strokePath();
+
+    // local debug ref
     this.localRef.x = this.currentPlayer.x;
     this.localRef.y = this.currentPlayer.y;
 
-    // this.cursorGraphics.clear();
-
-    // this.cursorGraphics.beginPath();
-    // this.cursorGraphics.moveTo(this.currentPlayer.x, this.currentPlayer.y);
-    // this.cursorGraphics.lineTo(this.pointerLocation.x, this.pointerLocation.x);
-    // this.cursorGraphics.strokePath();
-
-    // const pointerAngle = Phaser.Math.Angle.Between(
-    //   this.currentPlayer.x,
-    //   this.currentPlayer.y,
-    //   this.pointerLocation.x,
-    //   this.pointerLocation.x
-    // );
-    // this.currentPlayer.setRotation(pointerAngle);
-
     for (const sessionId in this.playerEntities) {
-      // interpolate all player entities
-      // (except the current player)
+      // interpolate all player entities except fof the current player
       if (sessionId === this.room.sessionId) {
         continue;
       }
