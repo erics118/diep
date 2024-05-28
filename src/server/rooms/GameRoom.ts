@@ -63,6 +63,7 @@ export class GameRoom extends Room<MyRoomState> {
     player.y = Math.random() * 100;
 
     this.state.players.set(client.sessionId, player);
+    console.log(this.state)
   }
 
   onLeave(client: Client, _consented: boolean) {

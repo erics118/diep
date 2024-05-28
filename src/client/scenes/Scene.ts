@@ -90,20 +90,20 @@ export class Scene extends Phaser.Scene {
     // create cursor and line
     this.cursor = this.add.image(10, 10, "cursor").setVisible(true);
 
-    this.cursorGraphics = this.add.graphics({
-      lineStyle: { width: 4, color: colors.debug.cursor },
-    });
+    // this.cursorGraphics = this.add.graphics({
+    //   lineStyle: { width: 4, color: colors.debug.cursor },
+    // });
 
     // register pointer move event
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       this.cursor.setVisible(true).setX(pointer.worldX).setY(pointer.worldY);
 
-      this.cursorGraphics.clear();
+      // this.cursorGraphics.clear();
 
-      this.cursorGraphics.beginPath();
-      this.cursorGraphics.moveTo(this.currentPlayer.x, this.currentPlayer.y);
-      this.cursorGraphics.lineTo(pointer.worldX, pointer.worldY);
-      this.cursorGraphics.strokePath();
+      // this.cursorGraphics.beginPath();
+      // this.cursorGraphics.moveTo(this.currentPlayer.x, this.currentPlayer.y);
+      // this.cursorGraphics.lineTo(pointer.worldX, pointer.worldY);
+      // this.cursorGraphics.strokePath();
     });
 
     // register key input events

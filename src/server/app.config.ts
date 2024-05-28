@@ -35,7 +35,7 @@ export default config({
      * Bind your custom express routes here:
      */
     app.get("/", (_req, res) => {
-      res.sendFile(path.join(__dirname, "../public/index.html"));
+      res.sendFile(path.join(__dirname, "../../public/server.html"));
     });
 
     const basicAuthMiddleware = basicAuth({

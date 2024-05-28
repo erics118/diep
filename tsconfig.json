@@ -20,5 +20,9 @@
     "resolveJsonModule": true,
     "strictPropertyInitialization": false,
     "noImplicitAny": false,
-  }
+    "outDir": "lib",
+    "allowJs": true,
+    "strictNullChecks": false,
+    "experimentalDecorators": true,
+  },
 }
