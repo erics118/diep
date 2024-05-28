@@ -33,7 +33,7 @@
     "build-server": "npm run clean && tsc",
     "start-client": "parcel serve public/client.html",
     "build-client": "parcel build public/client.html",
-    "clean": "node node_modules/rimraf/bin lib",
+    "clean": "node node_modules/.bin/rimraf lib",
     "format": "biome format --write ./src",
     "lint": "biome lint ./src",
     "fix": "biome check --apply ./src",

@@ -1,7 +1,8 @@
 import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
 import { BACKEND_URL, colors } from "../../shared/config";
-import type { Keys } from "../types";
+import type { Keys } from "../../shared/types";
+import { RoomState } from "../../shared/GameState";
 
 const MAP_SIZE = 5000;
 const MINIMAP_SIZE = 200;
@@ -233,7 +234,7 @@ export class Scene extends Phaser.Scene {
     const client = new Client(BACKEND_URL);
 
     try {
-      this.room = await client.joinOrCreate("diep_room", {});
+      this.room = await client.joinOrCreate<RoomState>("diep_room", {});
 
       // connection successful!
       connectionStatusText.destroy();

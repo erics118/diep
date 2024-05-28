@@ -1,19 +1,19 @@
 import { type Client, Room } from "colyseus";
-import { type InputData, MyRoomState, Player } from "./GameState";
+import { type InputData, RoomState, Player } from "../../shared/GameState";
 import { MAP_SIZE } from "../../shared/config";
 
-export class GameRoom extends Room<MyRoomState> {
+export class GameRoom extends Room<RoomState> {
   fixedTimeStep = 1000 / 60;
 
   onCreate(_options: any) {
-    this.setState(new MyRoomState());
+    this.setState(new RoomState());
     console.log("AAAAAAAAAAAset state")
     // set map dimensions
     this.state.mapWidth = MAP_SIZE;
     this.state.mapHeight = MAP_SIZE;
-console.log("FFFFFFF")
+    console.log("FFFFFFF")
     this.onMessage(0, (client, input) => {
-console.log("KKKKKKKK")
+      console.log("KKKKKKKK")
 
       // handle player input
       const player = this.state.players.get(client.sessionId);

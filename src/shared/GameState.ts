@@ -16,7 +16,7 @@ export class Player extends Schema {
   inputQueue: InputData[] = [];
 }
 
-export class MyRoomState extends Schema {
+export class RoomState extends Schema {
   @type("number") mapWidth: number;
   @type("number") mapHeight: number;
 

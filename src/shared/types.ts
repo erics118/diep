@@ -1,3 +1,5 @@
+import Phaser from "phaser";
+
 export type Keys = {
   up: Phaser.Input.Keyboard.Key;
   down: Phaser.Input.Keyboard.Key;
