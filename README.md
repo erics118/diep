@@ -1,38 +1,19 @@
-# Phaser: Real-time Multiplayer with Colyseus
+# diep-clone
 
-Full source-code for the step-by-step tutorial on how to use Phaser + Colyseus together.
+todo:
+- [ ] create a completely separate scene for minimap that only includes players
+- [ ] !send bullet data to server
+- [ ] !player health, and player health bar
+- [ ] player leveling
+- [ ] upgrades
+- [ ] random generation of shapes
+- collisions
+  - [ ] player-player collision
+  - [ ] shape-shape collision
+  - [ ] bullet-bullet collision
+  - [ ] player-shape collision
+  - [ ] !player-bullet collision
+  - [ ] shape-bullet collision
 
-- [Live Demo](https://colyseus-phaser-tutorial.glitch.me/)
-- [See step-by-step Tutorial](https://learn.colyseus.io/phaser)
-- [See Colyseus documentation](https://docs.colyseus.io/)
-
-## How to run the **server**
-
-- Download and install [Node.js LTS](https://nodejs.org/en/download/)
-- Clone or download this repository.
-- Run the following commands:
-
-```
-cd server
-npm install
-npm start
-```
-
-The WebSocket server should be available locally at `ws://localhost:2567` ([http://localhost:2567](http://localhost:2567) should be accessible.)
-
-## How to run the **client**
-
-In a new Terminal tab, run the following commands:
-
-```
-cd client
-npm install
-npm start
-```
-
-The client should be accessible at [`http://localhost:1234`](`http://localhost:1234`).
-
-## License
-
-- Source-code is licensed under MIT License.
-- The [assets](https://www.kenney.nl/assets/pixel-shmup) are licensed under [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/). 
+- bugs
+  - [ ] fix server/local position differing when touching world border
