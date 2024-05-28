@@ -42,6 +42,8 @@ export class Scene extends Phaser.Scene {
 
   currentTick = 0;
 
+  pointerLocation: { x: number, y: number }
+
   constructor() {
     super({ key: "diep" });
   }
@@ -51,12 +53,14 @@ export class Scene extends Phaser.Scene {
 
     const playerCircle = this.make.graphics({ x: 0, y: 0 });
     playerCircle.fillStyle(colors.player, 1.0);
-    playerCircle.fillCircle(25, 25, 25);
+    playerCircle.fillCircle(25, 25, 20);
+    playerCircle.fillStyle(colors.playerTurret, 1.0);
+    playerCircle.fillRect(40, 20, 10, 10);
     playerCircle.generateTexture("playerCircle", 50, 50);
 
     const enemyCircle = this.make.graphics({ x: 0, y: 0 });
     enemyCircle.fillStyle(colors.enemy, 1.0);
-    enemyCircle.fillCircle(25, 25, 25);
+    enemyCircle.fillCircle(25, 25, 20);
     enemyCircle.generateTexture("enemyCircle", 50, 50);
 
     const bullet = this.make.graphics({ x: 0, y: 0 });
@@ -96,6 +100,7 @@ export class Scene extends Phaser.Scene {
 
     // register pointer move event
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      this.pointerLocation = { x: pointer.worldX, y: pointer.worldY };
       this.cursor.setVisible(true).setX(pointer.worldX).setY(pointer.worldY);
 
       this.cursorGraphics.clear();
@@ -104,6 +109,14 @@ export class Scene extends Phaser.Scene {
       this.cursorGraphics.moveTo(this.currentPlayer.x, this.currentPlayer.y);
       this.cursorGraphics.lineTo(pointer.worldX, pointer.worldY);
       this.cursorGraphics.strokePath();
+
+      const pointerAngle = Phaser.Math.Angle.Between(
+        this.currentPlayer.x,
+        this.currentPlayer.y,
+        pointer.worldX,
+        pointer.worldY
+      );
+      this.currentPlayer.setRotation(pointerAngle);
     });
 
     // register key input events
@@ -296,6 +309,21 @@ export class Scene extends Phaser.Scene {
 
     this.localRef.x = this.currentPlayer.x;
     this.localRef.y = this.currentPlayer.y;
+
+    // this.cursorGraphics.clear();
+
+    // this.cursorGraphics.beginPath();
+    // this.cursorGraphics.moveTo(this.currentPlayer.x, this.currentPlayer.y);
+    // this.cursorGraphics.lineTo(this.pointerLocation.x, this.pointerLocation.x);
+    // this.cursorGraphics.strokePath();
+
+    // const pointerAngle = Phaser.Math.Angle.Between(
+    //   this.currentPlayer.x,
+    //   this.currentPlayer.y,
+    //   this.pointerLocation.x,
+    //   this.pointerLocation.x
+    // );
+    // this.currentPlayer.setRotation(pointerAngle);
 
     for (const sessionId in this.playerEntities) {
       // interpolate all player entities

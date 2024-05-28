@@ -59,8 +59,8 @@ export class GameRoom extends Room<MyRoomState> {
     console.log(client.sessionId, "joined!");
 
     const player = new Player();
-    player.x = Math.random() * 100;
-    player.y = Math.random() * 100;
+    player.x = Math.random() * 1000 + 200;
+    player.y = Math.random() * 1000 + 200;
 
     this.state.players.set(client.sessionId, player);
   }

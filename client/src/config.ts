@@ -27,6 +27,7 @@ export class Color {
 export const colors = {
   minimap: "rgba(70, 70, 70, 0.2)",
   player: 0x0000ff,
+  playerTurret: 0x666666,
   enemy: 0xff0000,
   playerBullet: 0x000099,
   background: 0xb8b8b8,
