@@ -1,7 +1,7 @@
 import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
-import { Keys } from "../types";
-import { BACKEND_URL } from "../config";
+import type { Keys } from "../types";
+import { BACKEND_URL, DEBUG, colors } from "../config";
 
 const MAP_SIZE = 5000;
 const MINIMAP_SIZE = 200;
@@ -34,7 +34,9 @@ export class Scene extends Phaser.Scene {
     shoot: false,
   };
 
-  line: Phaser.GameObjects.Line;
+  cursor: Phaser.GameObjects.Image;
+  cursorGraphics: Phaser.GameObjects.Graphics;
+
   elapsedTime = 0;
   fixedTimeStep = 1000 / 60;
 
@@ -45,15 +47,20 @@ export class Scene extends Phaser.Scene {
   }
 
   preload() {
-    this.cameras.main.setBackgroundColor(0xb8b8b8);
+    this.cameras.main.setBackgroundColor(colors.background);
 
     const playerCircle = this.make.graphics({ x: 0, y: 0 });
-    playerCircle.fillStyle(0x0000ff, 1.0);
+    playerCircle.fillStyle(colors.player, 1.0);
     playerCircle.fillCircle(25, 25, 25);
     playerCircle.generateTexture("playerCircle", 50, 50);
 
+    const enemyCircle = this.make.graphics({ x: 0, y: 0 });
+    enemyCircle.fillStyle(colors.enemy, 1.0);
+    enemyCircle.fillCircle(25, 25, 25);
+    enemyCircle.generateTexture("enemyCircle", 50, 50);
+
     const bullet = this.make.graphics({ x: 0, y: 0 });
-    bullet.fillStyle(0x000099, 1.0);
+    bullet.fillStyle(colors.playerBullet, 1.0);
     bullet.fillCircle(10, 10, 10);
     bullet.generateTexture("bullet", 10, 10);
     this.load.image(
@@ -69,7 +76,6 @@ export class Scene extends Phaser.Scene {
 
     // create background grid
     const gridSize = 32;
-    const gridColor = 0xcccccc;
 
     this.grid = this.add.grid(
       MAP_SIZE / 2,
@@ -78,18 +84,30 @@ export class Scene extends Phaser.Scene {
       MAP_SIZE,
       gridSize,
       gridSize,
-      gridColor,
+      colors.gridLines,
     );
 
-    const cursor = this.add.image(10, 10, "cursor").setVisible(true);
+    // create cursor and line
+    this.cursor = this.add.image(10, 10, "cursor").setVisible(true);
 
-    const graphics = this.add.graphics({
-      lineStyle: { width: 4, color: 0xaa00aa },
+    this.cursorGraphics = this.add.graphics({
+      lineStyle: { width: 4, color: colors.debug.cursor },
     });
-    // let line;
 
-    // register hooks for input
-    this.keys = this.input!.keyboard!.addKeys({
+    // register pointer move event
+    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      this.cursor.setVisible(true).setX(pointer.worldX).setY(pointer.worldY);
+
+      this.cursorGraphics.clear();
+
+      this.cursorGraphics.beginPath();
+      this.cursorGraphics.moveTo(this.currentPlayer.x, this.currentPlayer.y);
+      this.cursorGraphics.lineTo(pointer.worldX, pointer.worldY);
+      this.cursorGraphics.strokePath();
+    });
+
+    // register key input events
+    this.keys = this.input?.keyboard?.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.UP,
       down: Phaser.Input.Keyboard.KeyCodes.DOWN,
       left: Phaser.Input.Keyboard.KeyCodes.LEFT,
@@ -99,11 +117,11 @@ export class Scene extends Phaser.Scene {
       s: Phaser.Input.Keyboard.KeyCodes.S,
       d: Phaser.Input.Keyboard.KeyCodes.D,
       space: Phaser.Input.Keyboard.KeyCodes.SPACE,
-    })! as Keys;
+    }) as Keys;
 
-    // debug menu
+    // create debug menu
     this.debugMenu = this.add
-      .text(4, 4, "", { color: "#ff0000" })
+      .text(4, 4, "", { color: colors.debug.text })
       .setScrollFactor(0);
 
     // create minimap
@@ -115,14 +133,20 @@ export class Scene extends Phaser.Scene {
         MINIMAP_SIZE,
       )
       .setZoom(MINIMAP_SIZE / MAP_SIZE)
-      .setName("mini");
+      .setName("minimap");
 
-    this.minimap.ignore([this.debugMenu, this.grid]);
+    // keep only players on minimap
+    this.minimap.ignore([
+      this.debugMenu,
+      this.grid,
+      this.cursor,
+      this.cursorGraphics,
+    ]);
 
+    // update minimap position on window resize
     window.addEventListener(
       "resize",
       () => {
-        console.log("resize event");
         this.minimap.setPosition(
           this.game.scale.width - MINIMAP_SIZE - 20,
           this.game.scale.height - MINIMAP_SIZE - 20,
@@ -131,42 +155,53 @@ export class Scene extends Phaser.Scene {
       false,
     );
 
-    this.minimap.setBackgroundColor("rgba(70, 70, 70, 0.2)");
+    this.minimap.setBackgroundColor(colors.minimap);
     this.minimap.scrollX = MAP_SIZE / 2;
     this.minimap.scrollY = MAP_SIZE / 2;
 
     // connect with the room
     await this.connect();
 
-    this.room.state.players.onAdd((player, sessionId: string) => {
-      const entity = this.physics.add.image(player.x, player.y, "playerCircle");
-      this.playerEntities[sessionId] = entity;
-
-      // is current player
+    // listen for new players
+    this.room.state.players.onAdd((player: any, sessionId: string) => {
+      // current player
       if (sessionId === this.room.sessionId) {
+        const entity = this.physics.add.image(
+          player.x,
+          player.y,
+          "playerCircle",
+        );
+        this.playerEntities[sessionId] = entity;
+
         this.currentPlayer = entity;
-        console.log("got current player");
 
         entity.setCollideWorldBounds(true);
+
         // make camera follow it
         this.cameras.main.startFollow(entity, true, 0.5, 0.5);
 
+        // create local and remote debug rectangles
         this.localRef = this.add.rectangle(0, 0, entity.width, entity.height);
-        this.localRef.setStrokeStyle(1, 0x00ff00);
+        this.localRef.setStrokeStyle(1, colors.debug.local);
 
         this.remoteRef = this.add.rectangle(0, 0, entity.width, entity.height);
-        this.remoteRef.setStrokeStyle(1, 0xff0000);
+        this.remoteRef.setStrokeStyle(1, colors.debug.remote);
 
         player.onChange(() => {
           this.remoteRef.x = player.x;
           this.remoteRef.y = player.y;
         });
       } else {
-        // listening for server updates
+        const entity = this.physics.add.image(
+          player.x,
+          player.y,
+          "enemyCircle",
+        );
+        this.playerEntities[sessionId] = entity;
+
+        // listen for server updates
         player.onChange(() => {
-          //
-          // we're going to LERP the positions during the render loop.
-          //
+          // LERP the positions during the render loop.
           entity.setData("serverX", player.x);
           entity.setData("serverY", player.y);
         });
@@ -186,17 +221,6 @@ export class Scene extends Phaser.Scene {
         }
       },
     );
-
-    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
-      cursor.setVisible(true).setX(pointer.worldX).setY(pointer.worldY);
-
-      graphics.clear();
-
-      graphics.beginPath();
-      graphics.moveTo(this.currentPlayer.x, this.currentPlayer.y);
-      graphics.lineTo(pointer.worldX, pointer.worldY);
-      graphics.strokePath();
-    });
   }
 
   async connect() {
