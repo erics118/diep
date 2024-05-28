@@ -4,12 +4,12 @@ import { type InputData, MyRoomState, Player } from "./GameState";
 export class GameRoom extends Room<MyRoomState> {
   fixedTimeStep = 1000 / 60;
 
-  onCreate(options: any) {
+  onCreate(_options: any) {
     this.setState(new MyRoomState());
 
     // set map dimensions
-    this.state.mapWidth = 800;
-    this.state.mapHeight = 600;
+    this.state.mapWidth = 5000;
+    this.state.mapHeight = 5000;
 
     this.onMessage(0, (client, input) => {
       // handle player input
@@ -59,8 +59,8 @@ export class GameRoom extends Room<MyRoomState> {
     console.log(client.sessionId, "joined!");
 
     const player = new Player();
-    player.x = Math.random() * this.state.mapWidth;
-    player.y = Math.random() * this.state.mapHeight;
+    player.x = Math.random() * 100;
+    player.y = Math.random() * 100;
 
     this.state.players.set(client.sessionId, player);
   }

@@ -6,15 +6,7 @@ export class SceneSelector extends Phaser.Scene {
   }
 
   preload() {
-    // update menu background color
     this.cameras.main.setBackgroundColor(0x000000);
-
-    const graphics = this.make.graphics({ x: 0, y: 0 });
-
-    graphics.fillStyle(0x0000ff, 1.0);
-    graphics.fillCircle(25, 25, 25);
-
-    graphics.generateTexture("playerCircle", 50, 50);
   }
 
   create() {

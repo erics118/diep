@@ -4,22 +4,20 @@ import { Scene } from "./scenes/Scene";
 import { SceneSelector } from "./scenes/SceneSelector";
 
 const config: Phaser.Types.Core.GameConfig = {
-  type: Phaser.AUTO,
+  type: Phaser.AUTO, // selects renderer to use
   fps: {
     target: 60,
     forceSetTimeOut: true,
     smoothStep: false,
   },
-  width: 800,
-  height: 600,
-  // height: 200,
-  backgroundColor: "#b6d53c",
-  parent: "phaser-example",
+  // backgroundColor: "#",
   physics: {
     default: "arcade",
   },
-  pixelArt: false,
-  scene: [SceneSelector, Scene],
+  scale: {
+    mode: Phaser.Scale.RESIZE,
+  },
+  scene: [/* SceneSelector, */ Scene],
 };
 
 const game = new Phaser.Game(config);
