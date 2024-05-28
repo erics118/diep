@@ -5,12 +5,14 @@ export interface InputData {
   right: false;
   up: false;
   down: false;
+  rotation: number;
   tick: number;
 }
 
 export class Player extends Schema {
   @type("number") x: number;
   @type("number") y: number;
+  @type("number") rotation: number;
   @type("number") tick: number;
 
   inputQueue: InputData[] = [];

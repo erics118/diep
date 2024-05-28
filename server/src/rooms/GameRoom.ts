@@ -11,7 +11,7 @@ export class GameRoom extends Room<MyRoomState> {
     this.state.mapWidth = 5000;
     this.state.mapHeight = 5000;
 
-    this.onMessage(0, (client, input) => {
+    this.onMessage(0, (client, input: InputData) => {
       // handle player input
       const player = this.state.players.get(client.sessionId);
 
@@ -51,6 +51,8 @@ export class GameRoom extends Room<MyRoomState> {
         }
 
         player.tick = input.tick;
+
+        player.rotation = input.rotation;
       }
     }
   }

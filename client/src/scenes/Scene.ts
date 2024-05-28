@@ -1,6 +1,6 @@
 import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
-import { BACKEND_URL, colors } from "../config";
+import { BACKEND_URL, GRID_SIZE, colors } from "../config";
 import type { Bullet, Keys } from "../types";
 
 const MAP_SIZE = 5000;
@@ -30,12 +30,9 @@ export class Scene extends Phaser.Scene {
     right: false,
     up: false,
     down: false,
+    rotation: 0,
     tick: 0,
-    shoot: false,
   };
-
-  cursor: Phaser.GameObjects.Image;
-  cursorGraphics: Phaser.GameObjects.Graphics;
 
   elapsedTime = 0;
   fixedTimeStep = 1000 / 60;
@@ -55,27 +52,46 @@ export class Scene extends Phaser.Scene {
   preload() {
     this.cameras.main.setBackgroundColor(colors.background);
 
-    const playerCircle = this.make.graphics({ x: 0, y: 0 });
-    playerCircle.fillStyle(colors.player, 1.0);
-    playerCircle.fillCircle(25, 25, 20);
-    playerCircle.fillStyle(colors.playerTurret, 1.0);
-    playerCircle.fillRect(40, 20, 10, 10);
-    playerCircle.generateTexture("playerCircle", 50, 50);
+    // player circle
+    this.make
+      .graphics({ x: 0, y: 0 })
+      // turret fill
+      .fillStyle(colors.turret.fill)
+      .fillRect(61, 35, 25, 20)
+      // turret border
+      .lineStyle(3, colors.turret.border)
+      .strokeRect(61, 35, 25, 20)
+      // player fill
+      .fillStyle(colors.player.fill)
+      .fillCircle(45, 45, 22)
+      // player border
+      .lineStyle(3, colors.player.border)
+      .strokeCircle(45, 45, 22)
+      // generate texture
+      .generateTexture("playerCircle", 90, 90);
 
     const playerBullet = this.make.graphics({ x: 0, y: 0 });
     playerBullet.fillStyle(colors.playerBullet, 1.0);
     playerBullet.fillCircle(6, 6, 6);
     playerBullet.generateTexture("playerBullet", 12, 12);
 
-    const enemyCircle = this.make.graphics({ x: 0, y: 0 });
-    enemyCircle.fillStyle(colors.enemy, 1.0);
-    enemyCircle.fillCircle(25, 25, 20);
-    enemyCircle.generateTexture("enemyCircle", 50, 50);
-
-    this.load.image(
-      "cursor",
-      "https://labs.phaser.io/assets/sprites/drawcursor.png",
-    );
+    // enemy circle
+    this.make
+      .graphics({ x: 0, y: 0 })
+      // turret fill
+      .fillStyle(colors.turret.fill)
+      .fillRect(61, 35, 25, 20)
+      // turret border
+      .lineStyle(3, colors.turret.border)
+      .strokeRect(61, 35, 25, 20)
+      // player fill
+      .fillStyle(colors.enemy.fill)
+      .fillCircle(45, 45, 22)
+      // player border
+      .lineStyle(3, colors.enemy.border)
+      .strokeCircle(45, 45, 22)
+      // generate texture
+      .generateTexture("enemyCircle", 90, 90);
   }
 
   async create() {
@@ -84,36 +100,21 @@ export class Scene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, MAP_SIZE, MAP_SIZE);
 
     // create background grid
-    const gridSize = 32;
-
     this.grid = this.add.grid(
       MAP_SIZE / 2,
       MAP_SIZE / 2,
       MAP_SIZE,
       MAP_SIZE,
-      gridSize,
-      gridSize,
+      GRID_SIZE,
+      GRID_SIZE,
       colors.gridLines,
     );
 
     // create cursor and line
-    this.cursor = this.add.image(10, 10, "cursor").setVisible(true);
-
-    this.cursorGraphics = this.add.graphics({
-      lineStyle: { width: 4, color: colors.debug.cursor },
-    });
 
     // register pointer move event
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       this.pointerLocation = { x: pointer.worldX, y: pointer.worldY };
-      this.cursor.setX(pointer.worldX).setY(pointer.worldY);
-
-      this.cursorGraphics.clear();
-
-      this.cursorGraphics.beginPath();
-      this.cursorGraphics.moveTo(this.currentPlayer.x, this.currentPlayer.y);
-      this.cursorGraphics.lineTo(pointer.worldX, pointer.worldY);
-      this.cursorGraphics.strokePath();
 
       const pointerAngle = Phaser.Math.Angle.Between(
         this.currentPlayer.x,
@@ -122,6 +123,8 @@ export class Scene extends Phaser.Scene {
         pointer.worldY,
       );
       this.currentPlayer.setRotation(pointerAngle);
+      this.inputPayload.rotation = pointerAngle;
+      this.room.send(0, this.inputPayload);
     });
 
     // register key input events
@@ -154,12 +157,7 @@ export class Scene extends Phaser.Scene {
       .setName("minimap");
 
     // keep only players on minimap
-    this.minimap.ignore([
-      this.debugMenu,
-      this.grid,
-      this.cursor,
-      this.cursorGraphics,
-    ]);
+    this.minimap.ignore([this.debugMenu, this.grid]);
 
     // update minimap position on window resize
     window.addEventListener(
@@ -222,6 +220,7 @@ export class Scene extends Phaser.Scene {
           // LERP the positions during the render loop.
           entity.setData("serverX", player.x);
           entity.setData("serverY", player.y);
+          entity.setData("serverRotation", player.rotation);
         });
       }
     });
@@ -273,6 +272,7 @@ export class Scene extends Phaser.Scene {
       this.fixedTick(time, this.fixedTimeStep);
     }
 
+    // debug menu
     this.debugMenu.text =
       `Frame rate: ${this.game.loop.actualFps}` +
       `\nTick: ${this.currentTick}` +
@@ -341,28 +341,6 @@ export class Scene extends Phaser.Scene {
       }
     }
 
-    // move pointer with the player
-    if (this.inputPayload.left) {
-      this.pointerLocation.x -= velocity;
-    } else if (this.inputPayload.right) {
-      this.pointerLocation.x += velocity;
-    }
-
-    if (this.inputPayload.up) {
-      this.pointerLocation.y -= velocity;
-    } else if (this.inputPayload.down) {
-      this.pointerLocation.y += velocity;
-    }
-
-    this.cursor.setX(this.pointerLocation.x).setY(this.pointerLocation.y);
-
-    this.cursorGraphics.clear();
-
-    this.cursorGraphics.beginPath();
-    this.cursorGraphics.moveTo(this.currentPlayer.x, this.currentPlayer.y);
-    this.cursorGraphics.lineTo(this.pointerLocation.x, this.pointerLocation.y);
-    this.cursorGraphics.strokePath();
-
     // local debug ref
     this.localRef.x = this.currentPlayer.x;
     this.localRef.y = this.currentPlayer.y;
@@ -374,10 +352,11 @@ export class Scene extends Phaser.Scene {
       }
 
       const entity = this.playerEntities[sessionId];
-      const { serverX, serverY } = entity.data.values;
+      const { serverX, serverY, serverRotation } = entity.data.values;
 
       entity.x = Phaser.Math.Linear(entity.x, serverX, 0.2);
       entity.y = Phaser.Math.Linear(entity.y, serverY, 0.2);
+      entity.setRotation(serverRotation);
     }
   }
 }
