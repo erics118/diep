@@ -1,18 +1,21 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "include": [
-    "src/server/",
-    "src/shared/GameState.ts"
+    "src"
+  ],
+  "exclude": [
+    "src/client/"
   ],
   "compilerOptions": {
+    "outDir": "lib",
+    "module": "commonjs",
+    "target": "es6",
+    "strict": true,
     "lib": [
-      "ESNext",
+      "ES6",
       "DOM",
       "DOM.Iterable"
     ],
-    "module": "commonjs",
-    "target": "ESNext",
-    "strict": true,
     "isolatedModules": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -21,7 +24,6 @@
     "resolveJsonModule": true,
     "strictPropertyInitialization": false,
     "noImplicitAny": false,
-    "outDir": "lib",
     "allowJs": true,
     "strictNullChecks": false,
     "experimentalDecorators": true,
