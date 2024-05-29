@@ -1,7 +1,13 @@
 import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
 import { BACKEND_URL, GRID_SIZE, colors } from "#shared/config";
-import { MessageType, MoveMessage, RotateMessage, Bullet, type Keys } from "#shared/types";
+import {
+  type Bullet,
+  type Keys,
+  MessageType,
+  type MoveMessage,
+  type RotateMessage,
+} from "#shared/types";
 
 const MAP_SIZE = 5000;
 const MINIMAP_SIZE = 200;

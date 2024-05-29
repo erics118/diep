@@ -1,24 +1,22 @@
 import { MapSchema, Schema, type } from "@colyseus/schema";
 import type Phaser from "phaser";
 
-
 export enum MessageType {
-  MOVE,
-  ROTATION,
-  BULLET,
+  MOVE = 0,
+  ROTATION = 1,
+  BULLET = 2,
 }
-
 
 export type MoveMessage = {
   left: boolean;
   right: boolean;
   up: boolean;
   down: boolean;
-}
+};
 
 export type RotateMessage = {
   rotation: number;
-}
+};
 
 export class Player extends Schema {
   @type("number") x: number;
@@ -53,4 +51,3 @@ export type Bullet = {
   angle: number;
   speed: number;
 };
-

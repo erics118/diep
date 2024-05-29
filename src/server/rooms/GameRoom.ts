@@ -1,6 +1,12 @@
 import { type Client, Room } from "colyseus";
-import { RoomState, Player, MessageType, MoveMessage, RotateMessage } from "#shared/types";
 import { MAP_SIZE } from "#shared/config";
+import {
+  MessageType,
+  type MoveMessage,
+  Player,
+  RoomState,
+  type RotateMessage,
+} from "#shared/types";
 
 export class GameRoom extends Room<RoomState> {
   fixedTimeStep = 1000 / 60;
