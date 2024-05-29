@@ -1,7 +1,7 @@
 import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
 import { BACKEND_URL, GRID_SIZE, colors } from "#shared/config";
-import type { Bullet, InputData, Keys } from "#shared/types";
+import { MessageType, MoveMessage, RotateMessage, Bullet, type Keys } from "#shared/types";
 
 const MAP_SIZE = 5000;
 const MINIMAP_SIZE = 200;
@@ -25,15 +25,6 @@ export class Scene extends Phaser.Scene {
 
   minimap: Phaser.Cameras.Scene2D.Camera;
 
-  inputPayload: InputData = {
-    left: false,
-    right: false,
-    up: false,
-    down: false,
-    rotation: 0,
-    tick: 0,
-  };
-
   elapsedTime = 0;
   fixedTimeStep = 1000 / 60;
 
@@ -47,6 +38,14 @@ export class Scene extends Phaser.Scene {
 
   constructor() {
     super({ key: "diep" });
+  }
+
+  sendRotateMessage(msg: RotateMessage) {
+    this.room.send(MessageType.ROTATION, msg);
+  }
+
+  sendMoveMessage(msg: MoveMessage) {
+    this.room.send(MessageType.MOVE, msg);
   }
 
   preload() {
@@ -123,15 +122,9 @@ export class Scene extends Phaser.Scene {
         pointer.worldY,
       );
       this.currentPlayer.setRotation(pointerAngle);
-      // this.inputPayload.rotation = pointerAngle;
-      console.log("XXXXX", this.inputPayload);
-      this.room.send(0, {
-        left: false,
-        right: false,
-        up: false,
-        down: false,
+
+      this.sendRotateMessage({
         rotation: pointerAngle,
-        tick: 0,
       });
     });
 
@@ -295,12 +288,13 @@ export class Scene extends Phaser.Scene {
     this.currentTick++;
 
     const velocity = 2;
-    this.inputPayload.up = this.keys.up.isDown || this.keys.w.isDown;
-    this.inputPayload.down = this.keys.down.isDown || this.keys.s.isDown;
-    this.inputPayload.left = this.keys.left.isDown || this.keys.a.isDown;
-    this.inputPayload.right = this.keys.right.isDown || this.keys.d.isDown;
 
-    this.inputPayload.tick = this.currentTick;
+    const msg: MoveMessage = {
+      up: this.keys.up.isDown || this.keys.w.isDown,
+      down: this.keys.down.isDown || this.keys.s.isDown,
+      left: this.keys.left.isDown || this.keys.a.isDown,
+      right: this.keys.right.isDown || this.keys.d.isDown,
+    };
 
     if (
       this.keys.space.isDown &&
@@ -321,18 +315,18 @@ export class Scene extends Phaser.Scene {
       this.lastBulletTick = this.currentTick;
     }
 
-    this.room.send(0, this.inputPayload);
+    this.sendMoveMessage(msg);
 
     // move player
-    if (this.inputPayload.left) {
+    if (msg.left) {
       this.currentPlayer.x -= velocity;
-    } else if (this.inputPayload.right) {
+    } else if (msg.right) {
       this.currentPlayer.x += velocity;
     }
 
-    if (this.inputPayload.up) {
+    if (msg.up) {
       this.currentPlayer.y -= velocity;
-    } else if (this.inputPayload.down) {
+    } else if (msg.down) {
       this.currentPlayer.y += velocity;
     }
 

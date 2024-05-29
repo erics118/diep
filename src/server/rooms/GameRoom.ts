@@ -1,22 +1,30 @@
 import { type Client, Room } from "colyseus";
-import { type InputData, MyRoomState, Player } from "#shared/types";
+import { RoomState, Player, MessageType, MoveMessage, RotateMessage } from "#shared/types";
+import { MAP_SIZE } from "#shared/config";
 
-export class GameRoom extends Room<MyRoomState> {
+export class GameRoom extends Room<RoomState> {
   fixedTimeStep = 1000 / 60;
 
   onCreate(_options: any) {
-    this.setState(new MyRoomState());
+    this.setState(new RoomState());
 
     // set map dimensions
-    this.state.mapWidth = 5000;
-    this.state.mapHeight = 5000;
+    this.state.mapWidth = MAP_SIZE;
+    this.state.mapHeight = MAP_SIZE;
 
-    this.onMessage(0, (client, input: InputData) => {
-      // handle player input
+    // movement
+    this.onMessage(MessageType.MOVE, (client, input: MoveMessage) => {
       const player = this.state.players.get(client.sessionId);
 
       // enqueue input to user input buffer.
-      player.inputQueue.push(input);
+      player.moveQueue.push(input);
+    });
+
+    // rotation
+    this.onMessage(MessageType.ROTATION, (client, input: RotateMessage) => {
+      const player = this.state.players.get(client.sessionId);
+
+      player.rotation = input.rotation;
     });
 
     let elapsedTime = 0;
@@ -34,10 +42,10 @@ export class GameRoom extends Room<MyRoomState> {
     const velocity = 2;
 
     for (const [_, player] of this.state.players) {
-      let input: InputData;
+      let input: MoveMessage;
 
       // dequeue player inputs
-      while ((input = player.inputQueue.shift())) {
+      while ((input = player.moveQueue.shift())) {
         if (input.left) {
           player.x -= velocity;
         } else if (input.right) {
@@ -49,10 +57,6 @@ export class GameRoom extends Room<MyRoomState> {
         } else if (input.down) {
           player.y += velocity;
         }
-
-        player.tick = input.tick;
-
-        player.rotation = input.rotation;
       }
     }
   }
@@ -61,8 +65,8 @@ export class GameRoom extends Room<MyRoomState> {
     console.log(client.sessionId, "joined!");
 
     const player = new Player();
-    player.x = Math.random() * 1000 + 200;
-    player.y = Math.random() * 1000 + 200;
+    player.x = Math.random() * 500 + 200;
+    player.y = Math.random() * 500 + 200;
 
     this.state.players.set(client.sessionId, player);
   }
