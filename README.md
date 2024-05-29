@@ -18,3 +18,6 @@ todo:
 
 - bugs
   - [ ] fix server/local position differing when touching world border
+
+    "build-server": "npm run clean && tsc",
+    "build-client": "parcel build public/client.html",

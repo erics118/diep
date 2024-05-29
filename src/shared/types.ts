@@ -1,4 +1,30 @@
-import Phaser from "phaser";
+import { MapSchema, Schema, type } from "@colyseus/schema";
+import type Phaser from "phaser";
+
+export interface InputData {
+  left: boolean;
+  right: boolean;
+  up: boolean;
+  down: boolean;
+  rotation: number;
+  tick: number;
+}
+
+export class Player extends Schema {
+  @type("number") x: number;
+  @type("number") y: number;
+  @type("number") rotation: number;
+  @type("number") tick: number;
+
+  inputQueue: InputData[] = [];
+}
+
+export class MyRoomState extends Schema {
+  @type("number") mapWidth: number;
+  @type("number") mapHeight: number;
+
+  @type({ map: Player }) players = new MapSchema<Player>();
+}
 
 export type Keys = {
   up: Phaser.Input.Keyboard.Key;

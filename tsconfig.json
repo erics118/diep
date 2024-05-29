@@ -3,9 +3,9 @@
   "include": [
     "src"
   ],
-  "exclude": [
-    "src/client/"
-  ],
+  // "exclude": [
+  //   "src/client/"
+  // ],
   "compilerOptions": {
     "outDir": "lib",
     "module": "commonjs",

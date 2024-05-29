@@ -1,7 +1,7 @@
 import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
 import { BACKEND_URL, GRID_SIZE, colors } from "#shared/config";
-import type { Bullet, Keys } from "#shared/types";
+import type { Bullet, InputData, Keys } from "#shared/types";
 
 const MAP_SIZE = 5000;
 const MINIMAP_SIZE = 200;
@@ -25,7 +25,7 @@ export class Scene extends Phaser.Scene {
 
   minimap: Phaser.Cameras.Scene2D.Camera;
 
-  inputPayload: Input = {
+  inputPayload: InputData = {
     left: false,
     right: false,
     up: false,
@@ -124,7 +124,7 @@ export class Scene extends Phaser.Scene {
       );
       this.currentPlayer.setRotation(pointerAngle);
       // this.inputPayload.rotation = pointerAngle;
-      console.log("XXXXX", this.inputPayload)
+      console.log("XXXXX", this.inputPayload);
       this.room.send(0, {
         left: false,
         right: false,
