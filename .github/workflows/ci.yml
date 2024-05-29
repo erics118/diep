@@ -18,5 +18,5 @@ jobs:
         with:
           version: latest
 
-      - name: Client
+      - name: Check Linting and Formatting
         run: npm run ci
