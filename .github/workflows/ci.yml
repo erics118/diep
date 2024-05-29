@@ -19,5 +19,4 @@ jobs:
           version: latest
 
       - name: Client
-        working-directory: ./client
         run: npm run ci
