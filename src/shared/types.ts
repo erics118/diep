@@ -11,3 +11,10 @@ export type Keys = {
   d: Phaser.Input.Keyboard.Key;
   space: Phaser.Input.Keyboard.Key;
 };
+
+export type Bullet = {
+  body: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+  health: number;
+  angle: number;
+  speed: number;
+};

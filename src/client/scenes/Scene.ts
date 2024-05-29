@@ -1,8 +1,7 @@
 import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
-import { BACKEND_URL, colors } from "../../shared/config";
-import type { Keys } from "../../shared/types";
-import { RoomState } from "../../shared/GameState";
+import { BACKEND_URL, GRID_SIZE, colors } from "../../shared/config";
+import type { Bullet, Keys } from "../../shared/types";
 
 const MAP_SIZE = 5000;
 const MINIMAP_SIZE = 200;
@@ -31,17 +30,20 @@ export class Scene extends Phaser.Scene {
     right: false,
     up: false,
     down: false,
+    rotation: 0,
     tick: 0,
-    shoot: false,
   };
-
-  cursor: Phaser.GameObjects.Image;
-  cursorGraphics: Phaser.GameObjects.Graphics;
 
   elapsedTime = 0;
   fixedTimeStep = 1000 / 60;
 
   currentTick = 0;
+
+  pointerLocation: { x: number; y: number };
+
+  bullets: Bullet[] = [];
+  reloadTicks = 20;
+  lastBulletTick = 0;
 
   constructor() {
     super({ key: "diep" });
@@ -50,24 +52,46 @@ export class Scene extends Phaser.Scene {
   preload() {
     this.cameras.main.setBackgroundColor(colors.background);
 
-    const playerCircle = this.make.graphics({ x: 0, y: 0 });
-    playerCircle.fillStyle(colors.player, 1.0);
-    playerCircle.fillCircle(25, 25, 25);
-    playerCircle.generateTexture("playerCircle", 50, 50);
+    // player circle
+    this.make
+      .graphics({ x: 0, y: 0 })
+      // turret fill
+      .fillStyle(colors.turret.fill)
+      .fillRect(61, 35, 25, 20)
+      // turret border
+      .lineStyle(3, colors.turret.border)
+      .strokeRect(61, 35, 25, 20)
+      // player fill
+      .fillStyle(colors.player.fill)
+      .fillCircle(45, 45, 22)
+      // player border
+      .lineStyle(3, colors.player.border)
+      .strokeCircle(45, 45, 22)
+      // generate texture
+      .generateTexture("playerCircle", 90, 90);
 
-    const enemyCircle = this.make.graphics({ x: 0, y: 0 });
-    enemyCircle.fillStyle(colors.enemy, 1.0);
-    enemyCircle.fillCircle(25, 25, 25);
-    enemyCircle.generateTexture("enemyCircle", 50, 50);
+    const playerBullet = this.make.graphics({ x: 0, y: 0 });
+    playerBullet.fillStyle(colors.playerBullet, 1.0);
+    playerBullet.fillCircle(6, 6, 6);
+    playerBullet.generateTexture("playerBullet", 12, 12);
 
-    const bullet = this.make.graphics({ x: 0, y: 0 });
-    bullet.fillStyle(colors.playerBullet, 1.0);
-    bullet.fillCircle(10, 10, 10);
-    bullet.generateTexture("bullet", 10, 10);
-    this.load.image(
-      "cursor",
-      "https://labs.phaser.io/assets/sprites/drawcursor.png",
-    );
+    // enemy circle
+    this.make
+      .graphics({ x: 0, y: 0 })
+      // turret fill
+      .fillStyle(colors.turret.fill)
+      .fillRect(61, 35, 25, 20)
+      // turret border
+      .lineStyle(3, colors.turret.border)
+      .strokeRect(61, 35, 25, 20)
+      // player fill
+      .fillStyle(colors.enemy.fill)
+      .fillCircle(45, 45, 22)
+      // player border
+      .lineStyle(3, colors.enemy.border)
+      .strokeCircle(45, 45, 22)
+      // generate texture
+      .generateTexture("enemyCircle", 90, 90);
   }
 
   async create() {
@@ -76,35 +100,39 @@ export class Scene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, MAP_SIZE, MAP_SIZE);
 
     // create background grid
-    const gridSize = 32;
-
     this.grid = this.add.grid(
       MAP_SIZE / 2,
       MAP_SIZE / 2,
       MAP_SIZE,
       MAP_SIZE,
-      gridSize,
-      gridSize,
+      GRID_SIZE,
+      GRID_SIZE,
       colors.gridLines,
     );
 
     // create cursor and line
-    this.cursor = this.add.image(10, 10, "cursor").setVisible(true);
-
-    // this.cursorGraphics = this.add.graphics({
-    //   lineStyle: { width: 4, color: colors.debug.cursor },
-    // });
 
     // register pointer move event
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
-      this.cursor.setVisible(true).setX(pointer.worldX).setY(pointer.worldY);
+      this.pointerLocation = { x: pointer.worldX, y: pointer.worldY };
 
-      // this.cursorGraphics.clear();
-
-      // this.cursorGraphics.beginPath();
-      // this.cursorGraphics.moveTo(this.currentPlayer.x, this.currentPlayer.y);
-      // this.cursorGraphics.lineTo(pointer.worldX, pointer.worldY);
-      // this.cursorGraphics.strokePath();
+      const pointerAngle = Phaser.Math.Angle.Between(
+        this.currentPlayer.x,
+        this.currentPlayer.y,
+        pointer.worldX,
+        pointer.worldY,
+      );
+      this.currentPlayer.setRotation(pointerAngle);
+      // this.inputPayload.rotation = pointerAngle;
+      console.log("XXXXX", this.inputPayload)
+      this.room.send(0, {
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+        rotation: pointerAngle,
+        tick: 0,
+      });
     });
 
     // register key input events
@@ -137,12 +165,7 @@ export class Scene extends Phaser.Scene {
       .setName("minimap");
 
     // keep only players on minimap
-    this.minimap.ignore([
-      this.debugMenu,
-      this.grid,
-      this.cursor,
-      this.cursorGraphics,
-    ]);
+    this.minimap.ignore([this.debugMenu, this.grid]);
 
     // update minimap position on window resize
     window.addEventListener(
@@ -179,7 +202,7 @@ export class Scene extends Phaser.Scene {
         entity.setCollideWorldBounds(true);
 
         // make camera follow it
-        this.cameras.main.startFollow(entity, true, 0.5, 0.5);
+        this.cameras.main.startFollow(entity, true, 0.08, 0.08);
 
         // create local and remote debug rectangles
         this.localRef = this.add.rectangle(0, 0, entity.width, entity.height);
@@ -205,6 +228,7 @@ export class Scene extends Phaser.Scene {
           // LERP the positions during the render loop.
           entity.setData("serverX", player.x);
           entity.setData("serverY", player.y);
+          entity.setData("serverRotation", player.rotation);
         });
       }
     });
@@ -234,7 +258,7 @@ export class Scene extends Phaser.Scene {
     const client = new Client(BACKEND_URL);
 
     try {
-      this.room = await client.joinOrCreate<RoomState>("diep_room", {});
+      this.room = await client.joinOrCreate("diep_room", {});
 
       // connection successful!
       connectionStatusText.destroy();
@@ -256,6 +280,7 @@ export class Scene extends Phaser.Scene {
       this.fixedTick(time, this.fixedTimeStep);
     }
 
+    // debug menu
     this.debugMenu.text =
       `Frame rate: ${this.game.loop.actualFps}` +
       `\nTick: ${this.currentTick}` +
@@ -269,10 +294,6 @@ export class Scene extends Phaser.Scene {
   fixedTick(_time: number, _delta: number) {
     this.currentTick++;
 
-    // const currentPlayerRemote = this.room.state.players.get(this.room.sessionId);
-    // const ticksBehind = this.currentTick - currentPlayerRemote.tick;
-    // console.log({ ticksBehind });
-
     const velocity = 2;
     this.inputPayload.up = this.keys.up.isDown || this.keys.w.isDown;
     this.inputPayload.down = this.keys.down.isDown || this.keys.s.isDown;
@@ -281,8 +302,28 @@ export class Scene extends Phaser.Scene {
 
     this.inputPayload.tick = this.currentTick;
 
+    if (
+      this.keys.space.isDown &&
+      this.lastBulletTick + this.reloadTicks < this.currentTick
+    ) {
+      const entity = this.physics.add.image(
+        this.currentPlayer.x,
+        this.currentPlayer.y,
+        "playerBullet",
+      );
+
+      this.bullets.push({
+        body: entity,
+        angle: this.currentPlayer.rotation,
+        speed: 5,
+        health: 100,
+      });
+      this.lastBulletTick = this.currentTick;
+    }
+
     this.room.send(0, this.inputPayload);
 
+    // move player
     if (this.inputPayload.left) {
       this.currentPlayer.x -= velocity;
     } else if (this.inputPayload.right) {
@@ -295,21 +336,35 @@ export class Scene extends Phaser.Scene {
       this.currentPlayer.y += velocity;
     }
 
+    // move bullets
+    for (let i = this.bullets.length - 1; i >= 0; i--) {
+      const bullet = this.bullets[i];
+      bullet.body.x += bullet.speed * Math.cos(bullet.angle);
+      bullet.body.y += bullet.speed * Math.sin(bullet.angle);
+      bullet.health -= 1;
+      // remove the bullet from the list
+      if (bullet.health <= 0) {
+        bullet.body.destroy();
+        this.bullets.splice(i, 1);
+      }
+    }
+
+    // local debug ref
     this.localRef.x = this.currentPlayer.x;
     this.localRef.y = this.currentPlayer.y;
 
     for (const sessionId in this.playerEntities) {
-      // interpolate all player entities
-      // (except the current player)
+      // interpolate all player entities except fof the current player
       if (sessionId === this.room.sessionId) {
         continue;
       }
 
       const entity = this.playerEntities[sessionId];
-      const { serverX, serverY } = entity.data.values;
+      const { serverX, serverY, serverRotation } = entity.data.values;
 
       entity.x = Phaser.Math.Linear(entity.x, serverX, 0.2);
       entity.y = Phaser.Math.Linear(entity.y, serverY, 0.2);
+      entity.setRotation(serverRotation);
     }
   }
 }

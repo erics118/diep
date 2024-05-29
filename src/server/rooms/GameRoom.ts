@@ -1,24 +1,19 @@
 import { type Client, Room } from "colyseus";
-import { type InputData, RoomState, Player } from "../../shared/GameState";
-import { MAP_SIZE } from "../../shared/config";
+import { type InputData, MyRoomState, Player } from "../../shared/GameState";
 
-export class GameRoom extends Room<RoomState> {
+export class GameRoom extends Room<MyRoomState> {
   fixedTimeStep = 1000 / 60;
 
   onCreate(_options: any) {
-    this.setState(new RoomState());
-    console.log("AAAAAAAAAAAset state")
-    // set map dimensions
-    this.state.mapWidth = MAP_SIZE;
-    this.state.mapHeight = MAP_SIZE;
-    console.log("FFFFFFF")
-    this.onMessage(0, (client, input) => {
-      console.log("KKKKKKKK")
+    this.setState(new MyRoomState());
 
+    // set map dimensions
+    this.state.mapWidth = 5000;
+    this.state.mapHeight = 5000;
+
+    this.onMessage(0, (client, input: InputData) => {
       // handle player input
       const player = this.state.players.get(client.sessionId);
-
-      console.log(input, this.state)
 
       // enqueue input to user input buffer.
       player.inputQueue.push(input);
@@ -56,6 +51,8 @@ export class GameRoom extends Room<RoomState> {
         }
 
         player.tick = input.tick;
+
+        player.rotation = input.rotation;
       }
     }
   }
@@ -64,8 +61,8 @@ export class GameRoom extends Room<RoomState> {
     console.log(client.sessionId, "joined!");
 
     const player = new Player();
-    player.x = Math.random() * 100;
-    player.y = Math.random() * 100;
+    player.x = Math.random() * 1000 + 200;
+    player.y = Math.random() * 1000 + 200;
 
     this.state.players.set(client.sessionId, player);
   }
