@@ -1,7 +1,7 @@
 import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
-import { BACKEND_URL, GRID_SIZE, colors } from "../../shared/config";
-import type { Bullet, Keys } from "../../shared/types";
+import { BACKEND_URL, GRID_SIZE, colors } from "#shared/config";
+import type { Bullet, Keys } from "#shared/types";
 
 const MAP_SIZE = 5000;
 const MINIMAP_SIZE = 200;
@@ -25,7 +25,7 @@ export class Scene extends Phaser.Scene {
 
   minimap: Phaser.Cameras.Scene2D.Camera;
 
-  inputPayload = {
+  inputPayload: Input = {
     left: false,
     right: false,
     up: false,

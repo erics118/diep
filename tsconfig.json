@@ -16,6 +16,11 @@
       "DOM",
       "DOM.Iterable"
     ],
+    "paths": {
+      "#shared/*": [
+        "./src/shared/*"
+      ],
+    },
     "isolatedModules": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
