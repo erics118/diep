@@ -17,7 +17,7 @@ const config: Phaser.Types.Core.GameConfig = {
   scale: {
     mode: Phaser.Scale.RESIZE,
   },
-  scene: [/* SceneSelector, */ Scene],
+  scene: [SceneSelector, Scene],
 };
 
 const game = new Phaser.Game(config);

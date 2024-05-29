@@ -26,6 +26,7 @@ export class Color {
 }
 
 export const colors = {
+  username: "rgba(0, 0, 0, 0.5)",
   minimap: "rgba(70, 70, 70, 0.2)",
   player: {
     fill: 0x00b2e1,

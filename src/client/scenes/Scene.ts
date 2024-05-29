@@ -2,12 +2,11 @@ import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
 import { BACKEND_URL, GRID_SIZE, colors } from "#shared/config";
 import {
-  type Bullet,
-  type Keys,
   MessageType,
   type MoveMessage,
   type RotateMessage,
-} from "#shared/types";
+} from "#shared/message";
+import type { Bullet, Keys, SceneData } from "#shared/types";
 
 const MAP_SIZE = 5000;
 const MINIMAP_SIZE = 200;
@@ -42,8 +41,13 @@ export class Scene extends Phaser.Scene {
   reloadTicks = 20;
   lastBulletTick = 0;
 
+  username: string;
   constructor() {
     super({ key: "diep" });
+  }
+
+  init(data: SceneData) {
+    this.username = data.username;
   }
 
   sendRotateMessage(msg: RotateMessage) {
@@ -115,7 +119,13 @@ export class Scene extends Phaser.Scene {
       colors.gridLines,
     );
 
-    // create cursor and line
+    // draw username
+    this.add.text(
+      this.game.scale.width / 2,
+      this.game.scale.height - 50,
+      this.username,
+      { color: colors.username },
+    );
 
     // register pointer move event
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {

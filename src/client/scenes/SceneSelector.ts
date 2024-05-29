@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import type { SceneData } from "#shared/types";
 
 export class SceneSelector extends Phaser.Scene {
   constructor() {
@@ -17,15 +18,28 @@ export class SceneSelector extends Phaser.Scene {
     };
 
     this.add
-      .text(130, 220, "Start Game", textStyle)
+      .text(30, 100, "Start Game", textStyle)
       .setInteractive()
       .setPadding(6)
       .on("pointerdown", () => {
-        this.runScene("diep");
+        this.scene.stop("selector");
+        this.scene.start("diep", { username: textEntry.text } as SceneData);
       });
-  }
 
-  runScene(key: string) {
-    this.game.scene.switch("selector", key);
+    this.add.text(30, 300, "Enter your name:", textStyle);
+
+    const textEntry = this.add.text(30, 500, "", textStyle);
+
+    this.input.keyboard.on("keydown", (event: KeyboardEvent) => {
+      if (event.key === "Backspace") {
+        textEntry.text = textEntry.text.substring(0, textEntry.text.length - 1);
+      } else if (
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`1234567890-=[]\\;',./~!@#$%^&*()_+{}|:\"<>? ".includes(
+          event.key,
+        )
+      ) {
+        textEntry.text += event.key;
+      }
+    });
   }
 }
