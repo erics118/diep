@@ -3,10 +3,9 @@ import { MAP_SIZE } from "#shared/config";
 import {
   MessageType,
   type MoveMessage,
-  Player,
-  RoomState,
   type RotateMessage,
-} from "#shared/types";
+} from "#shared/message";
+import { Player, RoomState } from "#shared/state";
 
 export class GameRoom extends Room<RoomState> {
   fixedTimeStep = 1000 / 60;

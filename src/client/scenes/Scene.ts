@@ -1,15 +1,13 @@
 import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
-import { BACKEND_URL, GRID_SIZE, colors } from "#shared/config";
+import { BACKEND_URL, GRID_SIZE, MAP_SIZE, MINIMAP_SIZE } from "#shared/config";
 import {
   MessageType,
   type MoveMessage,
   type RotateMessage,
 } from "#shared/message";
+import { colors } from "#shared/style";
 import type { Bullet, Keys, SceneData } from "#shared/types";
-
-const MAP_SIZE = 5000;
-const MINIMAP_SIZE = 200;
 
 export class Scene extends Phaser.Scene {
   room: Room;
@@ -47,7 +45,7 @@ export class Scene extends Phaser.Scene {
   }
 
   init(data: SceneData) {
-    this.username = data.username;
+    this.username = data.username || "Player";
   }
 
   sendRotateMessage(msg: RotateMessage) {
@@ -79,11 +77,6 @@ export class Scene extends Phaser.Scene {
       // generate texture
       .generateTexture("playerCircle", 90, 90);
 
-    const playerBullet = this.make.graphics({ x: 0, y: 0 });
-    playerBullet.fillStyle(colors.playerBullet, 1.0);
-    playerBullet.fillCircle(6, 6, 6);
-    playerBullet.generateTexture("playerBullet", 12, 12);
-
     // enemy circle
     this.make
       .graphics({ x: 0, y: 0 })
@@ -101,6 +94,17 @@ export class Scene extends Phaser.Scene {
       .strokeCircle(45, 45, 22)
       // generate texture
       .generateTexture("enemyCircle", 90, 90);
+
+    this.make
+      .graphics({ x: 0, y: 0 })
+      // bullet fill
+      .fillStyle(colors.player.fill)
+      .fillCircle(15, 15, 9)
+      // bullet border
+      .lineStyle(3, colors.player.border)
+      .strokeCircle(15, 15, 9)
+      // generate texture
+      .generateTexture("playerBullet", 30, 30);
   }
 
   async create() {
@@ -120,12 +124,19 @@ export class Scene extends Phaser.Scene {
     );
 
     // draw username
-    this.add.text(
-      this.game.scale.width / 2,
-      this.game.scale.height - 50,
-      this.username,
-      { color: colors.username },
-    );
+    this.add
+      .text(
+        this.game.scale.width / 2,
+        this.game.scale.height - 50,
+        this.username,
+        {
+          color: colors.username,
+          fontSize: "20px",
+          fontFamily: "Arial",
+        },
+      )
+      // don't move relative to player
+      .setScrollFactor(0);
 
     // register pointer move event
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
@@ -160,6 +171,7 @@ export class Scene extends Phaser.Scene {
     // create debug menu
     this.debugMenu = this.add
       .text(4, 4, "", { color: colors.debug.text })
+      // don't more relative to player
       .setScrollFactor(0);
 
     // create minimap
@@ -311,6 +323,7 @@ export class Scene extends Phaser.Scene {
       left: this.keys.left.isDown || this.keys.a.isDown,
       right: this.keys.right.isDown || this.keys.d.isDown,
     };
+    this.sendMoveMessage(msg);
 
     if (
       this.keys.space.isDown &&
@@ -330,8 +343,6 @@ export class Scene extends Phaser.Scene {
       });
       this.lastBulletTick = this.currentTick;
     }
-
-    this.sendMoveMessage(msg);
 
     // move player
     if (msg.left) {
