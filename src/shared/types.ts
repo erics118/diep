@@ -12,13 +12,6 @@ export type Keys = {
   space: Phaser.Input.Keyboard.Key;
 };
 
-export type Bullet = {
-  body: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-  health: number;
-  angle: number;
-  speed: number;
-};
-
 export type SceneData = {
   username: string;
 };

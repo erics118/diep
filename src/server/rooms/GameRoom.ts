@@ -1,11 +1,12 @@
 import { type Client, Room } from "colyseus";
 import { MAP_SIZE } from "#shared/config";
 import {
+  BulletMessage,
   MessageType,
   type MoveMessage,
   type RotateMessage,
 } from "#shared/message";
-import { Player, RoomState } from "#shared/state";
+import { Bullet, Player, RoomState } from "#shared/state";
 
 export class GameRoom extends Room<RoomState> {
   fixedTimeStep = 1000 / 60;
@@ -31,6 +32,18 @@ export class GameRoom extends Room<RoomState> {
 
       player.rotation = input.rotation;
     });
+
+    // bullet
+    // this.onMessage(MessageType.BULLET, (client, input: BulletMessage) => {
+    //   const player = this.state.players.get(client.sessionId);
+
+    //   const b = new Bullet();
+    //   b.x = input.x;
+    //   b.y = input.y;
+    //   b.rotation = input.rotation;
+
+    //   player.bullets.push(b);
+    // });
 
     let elapsedTime = 0;
     this.setSimulationInterval((deltaTime) => {

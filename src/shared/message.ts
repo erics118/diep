@@ -14,3 +14,9 @@ export type MoveMessage = {
 export type RotateMessage = {
   rotation: number;
 };
+
+export type BulletMessage = {
+  rotation: number;
+  x: number;
+  y: number;
+};
