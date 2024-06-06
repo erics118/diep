@@ -3,6 +3,7 @@ import Phaser from "phaser";
 import { BACKEND_URL, GRID_SIZE, MAP_SIZE, MINIMAP_SIZE } from "#shared/config";
 import {
   type BulletMessage,
+  type HealthMessage,
   MessageType,
   type MoveMessage,
   type RotateMessage,
@@ -29,6 +30,7 @@ export class Scene extends Phaser.Scene {
   grid: Phaser.GameObjects.Grid;
 
   debugMenu: Phaser.GameObjects.Text;
+  healthBar: Phaser.GameObjects.Text;
 
   localRef: Phaser.GameObjects.Rectangle;
   remoteRef: Phaser.GameObjects.Rectangle;
@@ -71,6 +73,10 @@ export class Scene extends Phaser.Scene {
 
   sendBulletMessage(msg: BulletMessage) {
     this.room.send(MessageType.BULLET, msg);
+  }
+
+  sendHealthMessage(msg: HealthMessage) {
+    this.room.send(MessageType.HEALTH, msg);
   }
 
   preload() {
@@ -140,23 +146,6 @@ export class Scene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, MAP_SIZE, MAP_SIZE);
     this.physics.world.setBounds(0, 0, MAP_SIZE, MAP_SIZE);
 
-    // register pointer move event
-    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
-      this.pointerLocation = { x: pointer.worldX, y: pointer.worldY };
-
-      const pointerAngle = Phaser.Math.Angle.Between(
-        this.currentPlayer.x,
-        this.currentPlayer.y,
-        pointer.worldX,
-        pointer.worldY,
-      );
-      this.currentPlayer.setRotation(pointerAngle);
-
-      this.sendRotateMessage({
-        rotation: pointerAngle,
-      });
-    });
-
     // register key input events
     this.keys = this.input?.keyboard?.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.UP,
@@ -186,7 +175,18 @@ export class Scene extends Phaser.Scene {
 
     // draw username
     this.add
-      .text(this.game.scale.width / 2, this.game.scale.height - 50, this.username, {
+      .text(this.game.scale.width / 2, this.game.scale.height - 70, this.username, {
+        color: colors.username,
+        fontSize: "20px",
+        fontFamily: "Arial",
+      })
+      // don't move relative to player
+      .setScrollFactor(0)
+      .setDepth(Depth.Overlay);
+
+    // draw health bar
+    this.healthBar = this.add
+      .text(this.game.scale.width / 2, this.game.scale.height - 40, `Health: ${5000}`, {
         color: colors.username,
         fontSize: "20px",
         fontFamily: "Arial",
@@ -318,6 +318,23 @@ export class Scene extends Phaser.Scene {
       this,
     );
     // #endregion
+
+    // register pointer move event
+    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      this.pointerLocation = { x: pointer.worldX, y: pointer.worldY };
+
+      const pointerAngle = Phaser.Math.Angle.Between(
+        this.currentPlayer.x,
+        this.currentPlayer.y,
+        pointer.worldX,
+        pointer.worldY,
+      );
+      this.currentPlayer.setRotation(pointerAngle);
+
+      this.sendRotateMessage({
+        rotation: pointerAngle,
+      });
+    });
   }
 
   async connect() {
@@ -377,6 +394,8 @@ export class Scene extends Phaser.Scene {
       `\nRoom Id: ${this.room.roomId}` +
       `\nSession Id: ${this.room.sessionId}` +
       `\nNum players: ${this.room.state.players.size}`;
+
+    this.healthBar.text = `Health: ${this.room.state.players.get(this.room.sessionId).health}`;
   }
 
   fixedTick(_time: number, _delta: number) {
@@ -413,14 +432,15 @@ export class Scene extends Phaser.Scene {
         if (bullet) {
           this.bulletEntities[sessionId][i].body.x += bullet.speed * Math.cos(bullet.rotation);
           this.bulletEntities[sessionId][i].body.y += bullet.speed * Math.sin(bullet.rotation);
+
+          bullet.health -= 1;
+          // remove the bullet from the list
+          if (bullet.health <= 0) {
+            this.bulletEntities[sessionId][i].setVisible(false);
+            // this.bulletEntities[sessionId].splice(i, 1);
+            // this.room.state.players.get(this.room.sessionId).bullets.splice(i, 1);
+          }
         }
-        // bullet.health -= 1;
-        // remove the bullet from the list
-        // if (bullet.health <= 0) {
-        //   this.bulletEntities[i].body.destroy();
-        //   this.bulletEntities.splice(i, 1);
-        //   this.room.state.players.get(this.room.sessionId).bullets.splice(i, 1);
-        // }
       }
     }
     // #endregion
@@ -445,5 +465,32 @@ export class Scene extends Phaser.Scene {
       entity.setRotation(serverRotation);
     }
     // #endregion
+
+    // #region check collisions
+    for (const [sessionId, player] of this.room.state.players) {
+      for (const [sessionId2, player2] of this.room.state.players) {
+        for (const bullet of this.bulletEntities[sessionId2]) {
+          if (sessionId === sessionId2) continue;
+          if (!bullet.visible) continue;
+          // const playerX = this.playerEntities[sessionId].x;
+          // const playerY = this.playerEntities[sessionId].y;
+          const bulletShape = new Phaser.Geom.Circle(bullet.x, bullet.y, 9);
+          const playerShape = new Phaser.Geom.Circle(
+            this.playerEntities[sessionId].x,
+            this.playerEntities[sessionId].y,
+            22,
+          );
+          if (Phaser.Geom.Intersects.CircleToCircle(bulletShape, playerShape)) {
+            bullet.setVisible(false);
+            this.room.state.players.get(sessionId).health -= 100;
+            if (sessionId === this.room.sessionId) {
+              this.sendHealthMessage({
+                health: this.room.state.players.get(sessionId).health,
+              });
+            }
+          }
+        }
+      }
+    }
   }
 }

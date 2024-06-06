@@ -7,7 +7,7 @@ export class Bullet extends Schema {
   @type("number") rotation: number;
   @type("number") speed = 5;
   @type("boolean") drawn = false;
-  // @type("number") health: number = 1000;
+  @type("number") health = 500;
 }
 
 export class Player extends Schema {
@@ -16,6 +16,7 @@ export class Player extends Schema {
   @type("number") rotation = 0;
 
   @type([Bullet]) bullets = new ArraySchema<Bullet>();
+  @type("number") health = 5000;
 
   // bullets: Bullet[] = [];
 
