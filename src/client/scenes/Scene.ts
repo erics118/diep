@@ -48,7 +48,7 @@ export class Scene extends Phaser.Scene {
     [sessionId: string]: Phaser.Types.Physics.Arcade.ImageWithDynamicBody[];
   } = {};
 
-  reloadTicks = 20;
+  reloadTicks = 100;
   lastBulletTick = 0;
 
   username: string;
@@ -236,6 +236,8 @@ export class Scene extends Phaser.Scene {
 
     // listen for new players
     this.room.state.players.onAdd((player: any, sessionId: string) => {
+      this.bulletEntities[sessionId] = [];
+
       // current player
       if (sessionId === this.room.sessionId) {
         const entity = this.physics.add
@@ -290,6 +292,32 @@ export class Scene extends Phaser.Scene {
       }
     });
     // #endregion
+
+    // #region draw new player bullet if space is pressed
+    this.input.keyboard.on(
+      "keydown-SPACE",
+      () => {
+        if (this.keys.space.isDown && this.lastBulletTick + this.reloadTicks < this.currentTick) {
+          const entity = this.physics.add
+            .image(this.currentPlayer.x, this.currentPlayer.y, "playerBullet")
+            .setDepth(Depth.Bullets);
+
+          this.bulletEntities[this.room.sessionId].push(entity);
+
+          const msg: BulletMessage = {
+            rotation: this.currentPlayer.rotation,
+            x: this.currentPlayer.x,
+            y: this.currentPlayer.y,
+          };
+
+          this.sendBulletMessage(msg);
+
+          this.lastBulletTick = this.currentTick;
+        }
+      },
+      this,
+    );
+    // #endregion
   }
 
   async connect() {
@@ -318,6 +346,22 @@ export class Scene extends Phaser.Scene {
     if (!this.currentPlayer) {
       return;
     }
+
+    // #region draw enemy bullets
+    for (const [sessionId, player] of this.room.state.players) {
+      if (sessionId !== this.room.sessionId) {
+        for (const bullet of player.bullets) {
+          if (!bullet.drawn) {
+            const entity = this.physics.add
+              .image(bullet.x, bullet.y, "enemyBullet")
+              .setDepth(Depth.Players);
+            this.bulletEntities[sessionId].push(entity);
+            bullet.drawn = true;
+          }
+        }
+      }
+    }
+    // #endregion
 
     this.elapsedTime += delta;
     while (this.elapsedTime >= this.fixedTimeStep) {
@@ -349,7 +393,6 @@ export class Scene extends Phaser.Scene {
 
     // #region move current player
 
-    // move player
     if (msg.left) {
       this.currentPlayer.x -= velocity;
     } else if (msg.right) {
@@ -363,41 +406,14 @@ export class Scene extends Phaser.Scene {
     }
     // #endregion
 
-    // #region handle player bullets
-
-    // #region draw new bullet if space is pressed
-    if (this.keys.space.isDown && this.lastBulletTick + this.reloadTicks < this.currentTick) {
-      const entity = this.physics.add
-        .image(this.currentPlayer.x, this.currentPlayer.y, "playerBullet")
-        .setDepth(-1);
-      if (this.bulletEntities[this.room.sessionId] === undefined) {
-        this.bulletEntities[this.room.sessionId] = [];
-      }
-      this.bulletEntities[this.room.sessionId].push(entity);
-
-      const msg = {
-        rotation: this.currentPlayer.rotation,
-        x: entity.x,
-        y: entity.y,
-      };
-
-      this.sendBulletMessage(msg);
-
-      this.lastBulletTick = this.currentTick;
-    }
-    // #endregion
-
     // #region move player and enemy bullets
     for (const [sessionId, player] of this.room.state.players) {
-      const player = this.room.state.players.get(sessionId);
-      for (let i = player.bullets.length - 1; i >= 0; i--) {
+      for (let i = this.bulletEntities[sessionId].length - 1; i >= 0; i--) {
         const bullet = player.bullets[i];
-        if (this.bulletEntities[sessionId] === undefined) {
-          this.bulletEntities[sessionId] = [];
+        if (bullet) {
+          this.bulletEntities[sessionId][i].body.x += bullet.speed * Math.cos(bullet.rotation);
+          this.bulletEntities[sessionId][i].body.y += bullet.speed * Math.sin(bullet.rotation);
         }
-
-        this.bulletEntities[sessionId][i].body.x += bullet.speed * Math.cos(bullet.rotation);
-        this.bulletEntities[sessionId][i].body.y += bullet.speed * Math.sin(bullet.rotation);
         // bullet.health -= 1;
         // remove the bullet from the list
         // if (bullet.health <= 0) {
@@ -405,24 +421,6 @@ export class Scene extends Phaser.Scene {
         //   this.bulletEntities.splice(i, 1);
         //   this.room.state.players.get(this.room.sessionId).bullets.splice(i, 1);
         // }
-      }
-    }
-    // #endregion
-
-    // #region draw enemy bullets
-    for (const [sessionId, player] of this.room.state.players) {
-      if (sessionId !== this.room.sessionId) {
-        const player = this.room.state.players.get(sessionId);
-        for (const bullet of player.bullets) {
-          if (!bullet.drawn) {
-            const entity = this.physics.add.image(bullet.x, bullet.y, "enemyBullet").setDepth(-1);
-            if (this.bulletEntities[sessionId] === undefined) {
-              this.bulletEntities[sessionId] = [];
-            }
-            this.bulletEntities[sessionId].push(entity);
-            bullet.drawn = true;
-          }
-        }
       }
     }
     // #endregion
