@@ -1,0 +1,8 @@
+{
+  "workbench.editor.customLabels.patterns": {
+    "**/server/**": "${filename} - server",
+    "**/shared/**": "${filename} - shared",
+    "**/client/**": "${filename} - client"
+  },
+  "workbench.editor.labelFormat": "default"
+}

@@ -31,6 +31,7 @@ export class Scene extends Phaser.Scene {
 
   debugMenu: Phaser.GameObjects.Text;
   healthBar: Phaser.GameObjects.Text;
+  username: Phaser.GameObjects.Text;
 
   localRef: Phaser.GameObjects.Rectangle;
   remoteRef: Phaser.GameObjects.Rectangle;
@@ -50,17 +51,17 @@ export class Scene extends Phaser.Scene {
     [sessionId: string]: Phaser.Types.Physics.Arcade.ImageWithDynamicBody[];
   } = {};
 
-  reloadTicks = 100;
+  reloadTicks = 0;
   lastBulletTick = 0;
 
-  username: string;
+  usernameStr: string;
 
   constructor() {
     super({ key: "diep" });
   }
 
   init(data: SceneData) {
-    this.username = data.username || "Player";
+    this.usernameStr = data.username || "Player";
   }
 
   sendRotateMessage(msg: RotateMessage) {
@@ -174,8 +175,8 @@ export class Scene extends Phaser.Scene {
       .setDepth(Depth.Overlay);
 
     // draw username
-    this.add
-      .text(this.game.scale.width / 2, this.game.scale.height - 70, this.username, {
+    this.username = this.add
+      .text(this.game.scale.width / 2, this.game.scale.height - 70, this.usernameStr, {
         color: colors.username,
         fontSize: "20px",
         fontFamily: "Arial",
@@ -220,6 +221,8 @@ export class Scene extends Phaser.Scene {
           this.game.scale.width - MINIMAP_SIZE - 20,
           this.game.scale.height - MINIMAP_SIZE - 20,
         );
+        this.username.setPosition(this.game.scale.width / 2, this.game.scale.height - 70);
+        this.healthBar.setPosition(this.game.scale.width / 2, this.game.scale.height - 40);
       },
       false,
     );
@@ -371,7 +374,7 @@ export class Scene extends Phaser.Scene {
           if (!bullet.drawn) {
             const entity = this.physics.add
               .image(bullet.x, bullet.y, "enemyBullet")
-              .setDepth(Depth.Players);
+              .setDepth(Depth.Bullets);
             this.bulletEntities[sessionId].push(entity);
             bullet.drawn = true;
           }
@@ -411,7 +414,6 @@ export class Scene extends Phaser.Scene {
     this.sendMoveMessage(msg);
 
     // #region move current player
-
     if (msg.left) {
       this.currentPlayer.x -= velocity;
     } else if (msg.right) {
@@ -425,24 +427,27 @@ export class Scene extends Phaser.Scene {
     }
     // #endregion
 
-    // #region move player and enemy bullets
-    for (const [sessionId, player] of this.room.state.players) {
-      for (let i = this.bulletEntities[sessionId].length - 1; i >= 0; i--) {
-        const bullet = player.bullets[i];
-        if (bullet) {
-          this.bulletEntities[sessionId][i].body.x += bullet.speed * Math.cos(bullet.rotation);
-          this.bulletEntities[sessionId][i].body.y += bullet.speed * Math.sin(bullet.rotation);
+    // #region move enemy bullets
+    // for (const [sessionId, player] of this.room.state.players) {
+    //   for (let i = 0; i < this.bulletEntities[sessionId].length; ++i) {
+    //     const bullet = player.bullets[i];
+    //     if (bullet) {
+    //       this.bulletEntities[sessionId][i].body.x += bullet.speed * Math.cos(bullet.rotation);
+    //       this.bulletEntities[sessionId][i].body.y += bullet.speed * Math.sin(bullet.rotation);
 
-          bullet.health -= 1;
-          // remove the bullet from the list
-          if (bullet.health <= 0) {
-            this.bulletEntities[sessionId][i].setVisible(false);
-            // this.bulletEntities[sessionId].splice(i, 1);
-            // this.room.state.players.get(this.room.sessionId).bullets.splice(i, 1);
-          }
-        }
-      }
-    }
+    //       bullet.health -= 10;
+    //       // remove the bullet from the list
+    //       if (bullet.health <= 0) {
+    //         this.bulletEntities[sessionId][i].destroy();
+    //         this.bulletEntities[sessionId].splice(i, 1);
+    //         this.room.state.players.get(this.room.sessionId).bullets.splice(i, 1);
+    //         --i;
+    //       }
+    //     } else {
+    //       console.log("bullet not found");
+    //     }
+    //   }
+    // }
     // #endregion
 
     // #region update remote player locations
@@ -467,30 +472,36 @@ export class Scene extends Phaser.Scene {
     // #endregion
 
     // #region check collisions
-    for (const [sessionId, player] of this.room.state.players) {
-      for (const [sessionId2, player2] of this.room.state.players) {
-        for (const bullet of this.bulletEntities[sessionId2]) {
-          if (sessionId === sessionId2) continue;
-          if (!bullet.visible) continue;
-          // const playerX = this.playerEntities[sessionId].x;
-          // const playerY = this.playerEntities[sessionId].y;
-          const bulletShape = new Phaser.Geom.Circle(bullet.x, bullet.y, 9);
-          const playerShape = new Phaser.Geom.Circle(
-            this.playerEntities[sessionId].x,
-            this.playerEntities[sessionId].y,
-            22,
-          );
-          if (Phaser.Geom.Intersects.CircleToCircle(bulletShape, playerShape)) {
-            bullet.setVisible(false);
-            this.room.state.players.get(sessionId).health -= 100;
-            if (sessionId === this.room.sessionId) {
-              this.sendHealthMessage({
-                health: this.room.state.players.get(sessionId).health,
-              });
-            }
-          }
-        }
-      }
-    }
+    // for (const [sessionId, _] of this.room.state.players) {
+    //   for (const [sessionId2, _] of this.room.state.players) {
+    //     for (let i = 0; i < this.bulletEntities[sessionId2].length; ++i) {
+    //       const bulletEntity = this.bulletEntities[sessionId2][i];
+    //       const bullet = this.room.state.players.get(sessionId2).bullets[i];
+    //       if (sessionId === sessionId2) continue;
+    //       if (!bulletEntity.visible) continue;
+
+    //       const bulletShape = new Phaser.Geom.Circle(bullet.x, bullet.y, 9);
+    //       const playerShape = new Phaser.Geom.Circle(
+    //         this.playerEntities[sessionId].x,
+    //         this.playerEntities[sessionId].y,
+    //         22,
+    //       );
+
+    //       if (Phaser.Geom.Intersects.CircleToCircle(bulletShape, playerShape)) {
+    //         this.bulletEntities[sessionId][i].destroy();
+    //         this.bulletEntities[sessionId].splice(i, 1);
+    //         this.room.state.players.get(sessionId).health -= bullet.health;
+    //         this.room.state.players.get(this.room.sessionId).bullets.splice(i, 1);
+    //         --i;
+
+    //         if (sessionId === this.room.sessionId) {
+    //           this.sendHealthMessage({
+    //             health: this.room.state.players.get(sessionId).health,
+    //           });
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
   }
 }

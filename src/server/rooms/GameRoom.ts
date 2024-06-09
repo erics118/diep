@@ -87,6 +87,13 @@ export class GameRoom extends Room<RoomState> {
           player.y += velocity;
         }
       }
+
+      // move bullets
+      // for (const bullet of player.bullets) {
+      //   bullet.x += Math.cos(bullet.rotation) * bullet.speed;
+      //   bullet.y += Math.sin(bullet.rotation) * bullet.speed;
+      //   console.log(bullet.x, bullet.y);
+      // }
     }
   }
 
