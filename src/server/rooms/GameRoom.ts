@@ -109,8 +109,15 @@ export class GameRoom extends Room<RoomState> {
           const distance = Math.sqrt((bullet.x - target.x) ** 2 + (bullet.y - target.y) ** 2);
 
           if (distance <= 25) {
-            target.health -= 100;
-            player.bullets.delete(bulletId);
+            if (target.health <= bullet.health) {
+              bullet.health -= target.health;
+              target.isDead = true;
+            }
+
+            if (bullet.health <= target.health) {
+              target.health -= bullet.health;
+              player.bullets.delete(bulletId);
+            }
           }
         }
       }

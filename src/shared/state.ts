@@ -13,8 +13,10 @@ export class Player extends Schema {
   @type("number") y: number;
   @type("number") rotation = 0;
 
-  @type({ map: Bullet }) bullets = new MapSchema<Bullet>();
   @type("number") health = 5000;
+  @type("boolean") isDead = false;
+
+  @type({ map: Bullet }) bullets = new MapSchema<Bullet>();
 
   moveQueue: MoveMessage[] = [];
 }

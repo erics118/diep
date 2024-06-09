@@ -293,10 +293,17 @@ export class Game extends Phaser.Scene {
 
   // remove local reference when entity is removed from the server
   onPlayerRemove(_player: Player, sessionId: string) {
+    // remove player
     const entity = this.playerEntities[sessionId];
     if (entity) {
       entity.destroy();
       delete this.playerEntities[sessionId];
+    }
+
+    // remove bullets
+    for (const [bulletId, entity] of Object.entries(this.bulletEntities[sessionId])) {
+      entity.destroy();
+      delete this.bulletEntities[sessionId][bulletId];
     }
   }
 
@@ -449,13 +456,19 @@ export class Game extends Phaser.Scene {
   }
 
   moveRemote() {
-    for (const [sessionId, _] of this.room.state.players) {
+    for (const [sessionId, player] of this.room.state.players) {
       // interpolate all player entities except fof the current player
       if (sessionId === this.room.sessionId) {
         continue;
       }
 
       const entity = this.playerEntities[sessionId];
+
+      if (player.isDead) {
+        this.onPlayerRemove(player, sessionId);
+        continue;
+      }
+
       const { serverX, serverY, serverRotation } = entity.data.values;
 
       entity.x = Phaser.Math.Linear(entity.x, serverX, 0.2);
@@ -480,8 +493,26 @@ export class Game extends Phaser.Scene {
     }
   }
 
+  handleDead() {
+    this.playerEntities[this.room.sessionId].destroy();
+    delete this.playerEntities[this.room.sessionId];
+
+    for (const [_, bullets] of Object.entries(this.bulletEntities)) {
+      for (const [bulletId, entity] of Object.entries(bullets)) {
+        entity.destroy();
+        delete bullets[bulletId];
+      }
+    }
+    this.scene.stop("diep");
+    this.scene.start("start");
+  }
+
   fixedTick(_time: number, _delta: number) {
     this.currentTick++;
+
+    if (this.room.state.players.get(this.room.sessionId).isDead) {
+      this.handleDead();
+    }
 
     const msg: MoveMessage = {
       up: this.keys.up.isDown || this.keys.w.isDown,
