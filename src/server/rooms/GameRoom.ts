@@ -66,7 +66,6 @@ export class GameRoom extends Room<RoomState> {
   }
 
   fixedTick(_timeStep: number) {
-
     for (const [_, player] of this.state.players) {
       let input: MoveMessage;
 

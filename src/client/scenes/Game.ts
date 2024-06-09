@@ -307,21 +307,6 @@ export class Game extends Phaser.Scene {
     }
   }
 
-  // create bullet when space is pressed
-  onKeydownSpace() {
-    if (this.lastBulletTick + this.reloadTicks < this.currentTick) {
-      const msg: BulletMessage = {
-        rotation: this.playerEntities[this.room.sessionId].rotation,
-        x: this.playerEntities[this.room.sessionId].x,
-        y: this.playerEntities[this.room.sessionId].y,
-      };
-
-      this.sendBulletMessage(msg);
-
-      this.lastBulletTick = this.currentTick;
-    }
-  }
-
   // rotate player entity and send message to server
   onPointerMove(pointer: Phaser.Input.Pointer) {
     this.pointerLocation = { x: pointer.worldX, y: pointer.worldY };
@@ -354,6 +339,8 @@ export class Game extends Phaser.Scene {
       a: Phaser.Input.Keyboard.KeyCodes.A,
       s: Phaser.Input.Keyboard.KeyCodes.S,
       d: Phaser.Input.Keyboard.KeyCodes.D,
+      space: Phaser.Input.Keyboard.KeyCodes.SPACE,
+      cheat: Phaser.Input.Keyboard.KeyCodes.CLOSED_BRACKET,
     }) as Keys;
 
     this.createBackground();
@@ -373,7 +360,7 @@ export class Game extends Phaser.Scene {
 
     this.room.state.players.onRemove(this.onPlayerRemove.bind(this));
 
-    this.input.keyboard.on("keydown-SPACE", this.onKeydownSpace.bind(this), this);
+    // this.input.keyboard.on("keydown-SPACE", this.onKeydownSpace.bind(this), this);
 
     // register pointer move event
     this.input.on("pointermove", this.onPointerMove.bind(this));
@@ -507,11 +494,29 @@ export class Game extends Phaser.Scene {
     this.scene.start("start");
   }
 
+  handleBullet() {
+    if (this.lastBulletTick + this.reloadTicks < this.currentTick) {
+      const msg: BulletMessage = {
+        rotation: this.playerEntities[this.room.sessionId].rotation,
+        x: this.playerEntities[this.room.sessionId].x,
+        y: this.playerEntities[this.room.sessionId].y,
+      };
+
+      this.sendBulletMessage(msg);
+
+      this.lastBulletTick = this.currentTick;
+    }
+  }
+
   fixedTick(_time: number, _delta: number) {
     this.currentTick++;
 
     if (this.room.state.players.get(this.room.sessionId).isDead) {
       this.handleDead();
+    }
+
+    if (this.keys.space.isDown) {
+      this.handleBullet();
     }
 
     const msg: MoveMessage = {
