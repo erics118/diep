@@ -36,11 +36,11 @@ export class StartScreen extends Phaser.Scene {
     const urlParams = new URLSearchParams(window.location.search);
     const username = urlParams.get("u");
 
-    if (username) {
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, newUrl);
-      this.startGame(username);
-    }
+    // if (username) {
+    //   const newUrl = window.location.pathname;
+    //   window.history.replaceState({}, document.title, newUrl);
+    //   this.startGame(username);
+    // }
 
     const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
       color: "#ff0000",
@@ -57,6 +57,10 @@ export class StartScreen extends Phaser.Scene {
     this.add.text(30, 300, "Enter your name:", textStyle);
 
     this.textEntry = this.add.text(30, 500, "", textStyle);
+
+    if (username) {
+      this.textEntry.text = username;
+    }
 
     this.input.keyboard.on("keydown", this.onKeydown.bind(this));
   }
