@@ -16,8 +16,6 @@ export class Player extends Schema {
   @type({ map: Bullet }) bullets = new MapSchema<Bullet>();
   @type("number") health = 5000;
 
-  // bullets: Bullet[] = [];
-
   moveQueue: MoveMessage[] = [];
 }
 

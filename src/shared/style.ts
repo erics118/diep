@@ -1,16 +1,3 @@
-export class Color {
-  value: number;
-  constructor(value: number) {
-    this.value = value;
-  }
-  asText() {
-    return `#${this.value.toString(16)}`;
-  }
-  valueOf(): number {
-    return this.value;
-  }
-}
-
 export const colors = {
   username: "rgba(0, 0, 0, 0.5)",
   minimap: "rgba(70, 70, 70, 0.2)",

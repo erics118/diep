@@ -420,7 +420,7 @@ export class Game extends Phaser.Scene {
   // move local player and bullets
   moveLocal(msg: MoveMessage) {
     const velocity = 2;
-    // #region move current player
+
     if (msg.left) {
       this.playerEntities[this.room.sessionId].x -= velocity;
     } else if (msg.right) {
