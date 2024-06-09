@@ -14,7 +14,7 @@ export class StartScreen extends Phaser.Scene {
 
   onKeydown(event: KeyboardEvent) {
     if (event.key === "Enter") {
-      this.startGame();
+      this.startGame(this.textEntry.text);
     } else if (event.key === "Backspace") {
       this.textEntry.text = this.textEntry.text.substring(0, this.textEntry.text.length - 1);
     } else if (
@@ -26,12 +26,19 @@ export class StartScreen extends Phaser.Scene {
     }
   }
 
-  startGame() {
+  startGame(username: string) {
     this.scene.stop("selector");
-    this.scene.start("diep", { username: this.textEntry.text } as SceneData);
+    this.scene.start("diep", { username: username } as SceneData);
   }
 
   create() {
+    // immediately start game if username is present in url
+    const urlParams = new URLSearchParams(window.location.search);
+    const username = urlParams.get("u");
+    if (username) {
+      this.startGame(username);
+    }
+
     const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
       color: "#ff0000",
       fontSize: "32px",
