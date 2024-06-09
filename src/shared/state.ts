@@ -5,7 +5,6 @@ export class Bullet extends Schema {
   @type("number") x: number;
   @type("number") y: number;
   @type("number") rotation: number;
-  @type("number") speed = 5;
   @type("boolean") drawn = false;
   @type("number") health = 500;
 }

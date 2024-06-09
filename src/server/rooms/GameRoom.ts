@@ -42,9 +42,6 @@ export class GameRoom extends Room<RoomState> {
       b.x = input.x;
       b.y = input.y;
       b.rotation = input.rotation;
-      // b.health = 1000;
-      // b.drawn = false;
-      // b.speed = 5
 
       player.bullets.push(b);
     });
@@ -89,11 +86,11 @@ export class GameRoom extends Room<RoomState> {
       }
 
       // move bullets
-      // for (const bullet of player.bullets) {
-      //   bullet.x += Math.cos(bullet.rotation) * bullet.speed;
-      //   bullet.y += Math.sin(bullet.rotation) * bullet.speed;
-      //   console.log(bullet.x, bullet.y);
-      // }
+      for (const bullet of player.bullets) {
+        bullet.x += Math.cos(bullet.rotation) * 5;
+        bullet.y += Math.sin(bullet.rotation) * 5;
+        bullet.health -= 1;
+      }
     }
   }
 
