@@ -26,12 +26,12 @@
     "serve": "^14.2.3"
   },
   "scripts": {
-    "start-server": "tsx watch src/server/index.ts",
-    "start-client": "parcel serve public/client.html",
-    "build-server": "rimraf lib && tsc",
-    "build-client": "rimraf dist && parcel build public/client.html",
-    "server": "node lib/server/index.js",
-    "client": "serve dist",
+    "start:server": "tsx watch src/server/index.ts",
+    "start:client": "parcel serve public/client.html",
+    "build:server": "rimraf lib && tsc",
+    "build:client": "rimraf dist && parcel build public/client.html",
+    "start:server:prod": "node lib/server/index.js",
+    "start:client:prod": "serve dist",
     "clean": "rimraf lib && rimraf dist",
     "format": "biome format --write ./src",
     "lint": "biome lint ./src",
