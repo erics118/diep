@@ -97,6 +97,27 @@ export class GameRoom extends Room<RoomState> {
         }
       }
     }
+
+    // check bullet - player collision
+    for (const [playerSessionId, player] of this.state.players) {
+      for (const [bulletId, bullet] of player.bullets) {
+        for (const [targetSessionId, target] of this.state.players) {
+          if (playerSessionId === targetSessionId) {
+            continue;
+          }
+
+          const distance = Math.sqrt(
+            Math.pow(bullet.x - target.x, 2) +
+            Math.pow(bullet.y - target.y, 2)
+          );
+
+          if (distance <= 25) {
+            target.health -= 100;
+            player.bullets.delete(bulletId);
+          }
+        }
+      }
+    }
   }
 
   onJoin(client: Client, _options: any) {
