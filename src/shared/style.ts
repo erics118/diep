@@ -5,6 +5,10 @@ export const colors = {
     border: 0x797979,
     player: 0x3d3d3d,
   },
+  healthBar: {
+    fill: 0x84e37d,
+    background: 0x555555,
+  },
   player: {
     fill: 0x00b2e1,
     border: 0x0085a8,

@@ -13,3 +13,5 @@ export const GRID_SIZE = 20;
 export const PLAYER_VELOCITY = 2;
 
 export const DEV_KEY = "V1St";
+
+export const HEALTH_BAR_WIDTH = 200;

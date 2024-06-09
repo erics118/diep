@@ -1,6 +1,14 @@
 import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
-import { BACKEND_URL, DEV_KEY, GRID_SIZE, MAP_PADDING, MAP_SIZE, MINIMAP_SIZE } from "../../shared/config";
+import {
+  BACKEND_URL,
+  DEV_KEY,
+  GRID_SIZE,
+  HEALTH_BAR_WIDTH,
+  MAP_PADDING,
+  MAP_SIZE,
+  MINIMAP_SIZE,
+} from "../../shared/config";
 import {
   type BulletMessage,
   type CheatMessage,
@@ -37,7 +45,11 @@ export class Game extends Phaser.Scene {
   grid: Phaser.GameObjects.Grid;
 
   debugMenu: Phaser.GameObjects.Text;
-  healthBar: Phaser.GameObjects.Text;
+
+  healthText: Phaser.GameObjects.Text;
+  healthBarInner: Phaser.GameObjects.Graphics;
+  healthBarOuter: Phaser.GameObjects.Graphics;
+
   username: Phaser.GameObjects.Text;
 
   localRef: Phaser.GameObjects.Rectangle;
@@ -189,17 +201,37 @@ export class Game extends Phaser.Scene {
       })
       // don't move relative to player
       .setScrollFactor(0)
+      .setOrigin(0.5, 0.5)
+      .setDepth(Depth.Overlay);
+
+    this.healthBarOuter = this.add
+      .graphics()
+      .fillStyle(colors.healthBar.background)
+      .fillRect(0, 0, HEALTH_BAR_WIDTH + 4, 15)
+      .setX(this.game.scale.width / 2 - HEALTH_BAR_WIDTH / 2 - 2)
+      .setScrollFactor(0)
+      .setY(this.game.scale.height - 52)
+      .setDepth(Depth.Overlay);
+
+    this.healthBarInner = this.add
+      .graphics()
+      .fillStyle(colors.healthBar.fill)
+      .fillRect(0, 0, HEALTH_BAR_WIDTH, 11)
+      .setX(this.game.scale.width / 2 - HEALTH_BAR_WIDTH / 2)
+      .setScrollFactor(0)
+      .setY(this.game.scale.height - 50)
       .setDepth(Depth.Overlay);
 
     // draw health bar
-    this.healthBar = this.add
-      .text(this.game.scale.width / 2, this.game.scale.height - 40, `Health: ${5000}`, {
+    this.healthText = this.add
+      .text(this.game.scale.width / 2, this.game.scale.height - 20, `Health: ${5000}`, {
         color: colors.username,
         fontSize: "20px",
         fontFamily: "Arial",
       })
       // don't move relative to player
       .setScrollFactor(0)
+      .setOrigin(0.5, 0.5)
       .setDepth(Depth.Overlay);
   }
 
@@ -216,7 +248,7 @@ export class Game extends Phaser.Scene {
       .setZoom(((MINIMAP_SIZE * 2) / MAP_SIZE) * 0.85);
 
     // keep only players on minimap
-    this.minimap.ignore([this.debugMenu, this.grid, this.username, this.healthBar]);
+    this.minimap.ignore([this.debugMenu, this.grid, this.username, this.healthText]);
 
     this.minimap.setBackgroundColor("rgb(80, 80, 80, 0.2)");
     this.minimap.scrollX = MAP_SIZE / 2;
@@ -247,7 +279,9 @@ export class Game extends Phaser.Scene {
     );
 
     this.username.setPosition(this.game.scale.width / 2, this.game.scale.height - 70);
-    this.healthBar.setPosition(this.game.scale.width / 2, this.game.scale.height - 40);
+    this.healthBarOuter.setPosition(this.game.scale.width / 2, this.game.scale.height - 52);
+    this.healthBarInner.setPosition(this.game.scale.width / 2, this.game.scale.height - 50);
+    this.healthText.setPosition(this.game.scale.width / 2, this.game.scale.height - 20);
   }
 
   // listen for new players and create player entities
@@ -468,7 +502,7 @@ export class Game extends Phaser.Scene {
         `\n${cheatString}`;
     }
 
-    this.healthBar.text = `Health: ${this.room.state.players.get(this.room.sessionId).health}`;
+    this.healthText.text = `Health: ${this.room.state.players.get(this.room.sessionId).health}`;
   }
 
   // move local player and bullets
@@ -476,6 +510,10 @@ export class Game extends Phaser.Scene {
     const player = this.room.state.players.get(this.room.sessionId);
     const velocity = player.cheatSpeed ? 5 : player.velocity;
 
+    // set health bar
+    this.healthBarInner.scaleX = player.health / 5000;
+
+    // move player
     if (msg.left) {
       this.playerEntities[this.room.sessionId].x -= velocity;
     } else if (msg.right) {
@@ -488,6 +526,7 @@ export class Game extends Phaser.Scene {
       this.playerEntities[this.room.sessionId].y += velocity;
     }
 
+    // check borders
     if (this.playerEntities[this.room.sessionId].x < MAP_PADDING) {
       this.playerEntities[this.room.sessionId].x = MAP_PADDING;
     }
@@ -501,11 +540,13 @@ export class Game extends Phaser.Scene {
       this.playerEntities[this.room.sessionId].y = MAP_SIZE - MAP_PADDING;
     }
 
+    // draw on minimap
     this.minimapPlayerEntities[this.room.sessionId].x =
       (this.playerEntities[this.room.sessionId].x / MAP_SIZE) * MINIMAP_SIZE;
     this.minimapPlayerEntities[this.room.sessionId].y =
       (this.playerEntities[this.room.sessionId].y / MAP_SIZE) * MINIMAP_SIZE;
 
+    // move bullets
     for (const [bulletId, entity] of Object.entries(this.bulletEntities[this.room.sessionId])) {
       const bullet = this.room.state.players.get(this.room.sessionId).bullets.get(bulletId);
 
