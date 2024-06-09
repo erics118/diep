@@ -22,10 +22,15 @@ export enum Depth {
 export class Scene extends Phaser.Scene {
   room: Room<RoomState>;
 
-  currentPlayer: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+  // playerEntities[this.room.sessionId]: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
   playerEntities: {
     [sessionId: string]: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
   } = {};
+
+  bulletEntities: {
+    [sessionId: string]: Phaser.Types.Physics.Arcade.ImageWithDynamicBody[];
+  } = {};
+
 
   grid: Phaser.GameObjects.Grid;
 
@@ -46,10 +51,6 @@ export class Scene extends Phaser.Scene {
   currentTick = 0;
 
   pointerLocation: { x: number; y: number };
-
-  bulletEntities: {
-    [sessionId: string]: Phaser.Types.Physics.Arcade.ImageWithDynamicBody[];
-  } = {};
 
   reloadTicks = 0;
   lastBulletTick = 0;
@@ -157,7 +158,6 @@ export class Scene extends Phaser.Scene {
       a: Phaser.Input.Keyboard.KeyCodes.A,
       s: Phaser.Input.Keyboard.KeyCodes.S,
       d: Phaser.Input.Keyboard.KeyCodes.D,
-      space: Phaser.Input.Keyboard.KeyCodes.SPACE,
     }) as Keys;
 
     // #region draw graphics: background grid, debug menu, username
@@ -238,8 +238,10 @@ export class Scene extends Phaser.Scene {
     await this.connect();
 
     // listen for new players
-    this.room.state.players.onAdd((player: any, sessionId: string) => {
+    this.room.state.players.onAdd((player: Player, sessionId: string) => {
       this.bulletEntities[sessionId] = [];
+
+
 
       // current player
       if (sessionId === this.room.sessionId) {
@@ -248,7 +250,7 @@ export class Scene extends Phaser.Scene {
           .setDepth(Depth.Players);
         this.playerEntities[sessionId] = entity;
 
-        this.currentPlayer = entity;
+        // this.playerEntities[this.room.sessionId] = entity;
 
         entity.setCollideWorldBounds(true);
 
@@ -270,6 +272,14 @@ export class Scene extends Phaser.Scene {
           this.remoteRef.x = player.x;
           this.remoteRef.y = player.y;
         });
+        player.bullets.onAdd((bullet: Bullet) => {
+          const entity = this.physics.add
+            .image(bullet.x, bullet.y, "playerBullet")
+            .setDepth(Depth.Bullets);
+
+          this.bulletEntities[this.room.sessionId].push(entity);
+        });
+
       } else {
         const entity = this.physics.add
           .image(player.x, player.y, "enemyCircle")
@@ -282,6 +292,13 @@ export class Scene extends Phaser.Scene {
           entity.setData("serverX", player.x);
           entity.setData("serverY", player.y);
           entity.setData("serverRotation", player.rotation);
+        });
+
+        player.bullets.onAdd((bullet: Bullet) => {
+          const entity = this.physics.add
+            .image(bullet.x, bullet.y, "enemyBullet")
+            .setDepth(Depth.Bullets);
+          this.bulletEntities[sessionId].push(entity);
         });
       }
     });
@@ -300,22 +317,21 @@ export class Scene extends Phaser.Scene {
     this.input.keyboard.on(
       "keydown-SPACE",
       () => {
-        if (this.keys.space.isDown && this.lastBulletTick + this.reloadTicks < this.currentTick) {
-          const entity = this.physics.add
-            .image(this.currentPlayer.x, this.currentPlayer.y, "playerBullet")
-            .setDepth(Depth.Bullets);
+        if (this.lastBulletTick + this.reloadTicks < this.currentTick) {
 
-          this.bulletEntities[this.room.sessionId].push(entity);
 
           const msg: BulletMessage = {
-            rotation: this.currentPlayer.rotation,
-            x: this.currentPlayer.x,
-            y: this.currentPlayer.y,
+            rotation: this.playerEntities[this.room.sessionId].rotation,
+            x: this.playerEntities[this.room.sessionId].x,
+            y: this.playerEntities[this.room.sessionId].y,
           };
 
           this.sendBulletMessage(msg);
 
+          // this.room.state.players.get(this.room.sessionId).bullets.push(
+
           this.lastBulletTick = this.currentTick;
+          // })
         }
       },
       this,
@@ -327,12 +343,12 @@ export class Scene extends Phaser.Scene {
       this.pointerLocation = { x: pointer.worldX, y: pointer.worldY };
 
       const pointerAngle = Phaser.Math.Angle.Between(
-        this.currentPlayer.x,
-        this.currentPlayer.y,
+        this.playerEntities[this.room.sessionId].x,
+        this.playerEntities[this.room.sessionId].y,
         pointer.worldX,
         pointer.worldY,
       );
-      this.currentPlayer.setRotation(pointerAngle);
+      this.playerEntities[this.room.sessionId].setRotation(pointerAngle);
 
       this.sendRotateMessage({
         rotation: pointerAngle,
@@ -363,24 +379,24 @@ export class Scene extends Phaser.Scene {
 
   update(time: number, delta: number): void {
     // skip loop if not connected yet.
-    if (!this.currentPlayer) {
+    if (!this.room) {
       return;
     }
 
     // #region draw enemy bullets
-    for (const [sessionId, player] of this.room.state.players) {
-      if (sessionId !== this.room.sessionId) {
-        for (const bullet of player.bullets) {
-          if (!bullet.drawn) {
-            const entity = this.physics.add
-              .image(bullet.x, bullet.y, "enemyBullet")
-              .setDepth(Depth.Bullets);
-            this.bulletEntities[sessionId].push(entity);
-            bullet.drawn = true;
-          }
-        }
-      }
-    }
+    // for (const [sessionId, player] of this.room.state.players) {
+    //   if (sessionId !== this.room.sessionId) {
+    //     for (const bullet of player.bullets) {
+    //       if (!bullet.drawn) {
+    //         const entity = this.physics.add
+    //           .image(bullet.x, bullet.y, "enemyBullet")
+    //           .setDepth(Depth.Bullets);
+    //         this.bulletEntities[sessionId].push(entity);
+    //         bullet.drawn = true;
+    //       }
+    //     }
+    //   }
+    // }
     // #endregion
 
     this.elapsedTime += delta;
@@ -393,7 +409,7 @@ export class Scene extends Phaser.Scene {
     this.debugMenu.text =
       `Frame rate: ${this.game.loop.actualFps}` +
       `\nTick: ${this.currentTick}` +
-      `\n(${this.currentPlayer.x.toFixed(0)}, ${this.currentPlayer.y.toFixed(0)})` +
+      `\n(${this.playerEntities[this.room.sessionId].x.toFixed(0)}, ${this.playerEntities[this.room.sessionId].y.toFixed(0)})` +
       `\nRoom Id: ${this.room.roomId}` +
       `\nSession Id: ${this.room.sessionId}` +
       `\nNum players: ${this.room.state.players.size}`;
@@ -415,15 +431,15 @@ export class Scene extends Phaser.Scene {
 
     // #region move current player
     if (msg.left) {
-      this.currentPlayer.x -= velocity;
+      this.playerEntities[this.room.sessionId].x -= velocity;
     } else if (msg.right) {
-      this.currentPlayer.x += velocity;
+      this.playerEntities[this.room.sessionId].x += velocity;
     }
 
     if (msg.up) {
-      this.currentPlayer.y -= velocity;
+      this.playerEntities[this.room.sessionId].y -= velocity;
     } else if (msg.down) {
-      this.currentPlayer.y += velocity;
+      this.playerEntities[this.room.sessionId].y += velocity;
     }
     // #endregion
 
@@ -453,8 +469,9 @@ export class Scene extends Phaser.Scene {
     // #region update remote player locations
 
     // draw local debug ref
-    this.localRef.x = this.currentPlayer.x;
-    this.localRef.y = this.currentPlayer.y;
+    // console.log(this.room.sessionId)
+    this.localRef.x = this.playerEntities[this.room.sessionId].x;
+    this.localRef.y = this.playerEntities[this.room.sessionId].y;
 
     for (const sessionId in this.playerEntities) {
       // interpolate all player entities except fof the current player
