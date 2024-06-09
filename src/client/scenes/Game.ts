@@ -202,6 +202,26 @@ export class Game extends Phaser.Scene {
       .setDepth(Depth.Overlay);
   }
 
+  createMinimap() {
+    this.minimap = this.cameras
+      .add(
+        this.game.scale.width - MINIMAP_SIZE * 2 - 20,
+        this.game.scale.height - MINIMAP_SIZE * 2 - 20,
+        MINIMAP_SIZE * 2,
+        MINIMAP_SIZE * 2,
+        false,
+        "minimap",
+      )
+      .setZoom(MINIMAP_SIZE * 2 / MAP_SIZE);
+
+    // keep only players on minimap
+    this.minimap.ignore([this.debugMenu, this.grid, this.username, this.healthBar]);
+
+    this.minimap.setBackgroundColor("rgb(80, 80, 80, 0.2)");
+    this.minimap.scrollX = MAP_SIZE / 2;
+    this.minimap.scrollY = MAP_SIZE / 2;
+  }
+
   createMinimapContainer() {
     // Create a container for the main part of the scene
     this.minimapContainer = this.add
@@ -220,7 +240,7 @@ export class Game extends Phaser.Scene {
           MINIMAP_SIZE,
           MINIMAP_SIZE,
           colors.minimap.background,
-          0.5,
+          0.2,
         )
         .setStrokeStyle(3, colors.minimap.border),
     );
@@ -266,12 +286,11 @@ export class Game extends Phaser.Scene {
       this.minimapPlayerEntities[sessionId] = minimapEntity;
       this.minimapContainer.add(minimapEntity);
 
-      // entity.setCollideWorldBounds(true);
-
       // make camera follow player
       this.cameras.main.startFollow(entity, true, 0.08, 0.08);
 
       if (this.devMode) {
+
         // create local and remote debug rectangles
         this.localRef = this.add
           .rectangle(0, 0, entity.width, entity.height)
@@ -282,6 +301,8 @@ export class Game extends Phaser.Scene {
           .rectangle(0, 0, entity.width, entity.height)
           .setDepth(Depth.Players)
           .setStrokeStyle(1, colors.debug.remote);
+
+        this.minimap.ignore([this.localRef, this.remoteRef]);
 
         player.onChange(() => {
           this.remoteRef.x = player.x;
@@ -361,8 +382,8 @@ export class Game extends Phaser.Scene {
 
   async create() {
     const urlParams = new URLSearchParams(window.location.search);
-    const devMode = urlParams.get("dev") === "true";
-    if (devMode) {
+    const dev = urlParams.get("dev") === "V1StGXR8Z5jdHi6B";
+    if (dev) {
       this.devMode = true;
     }
 
@@ -385,21 +406,25 @@ export class Game extends Phaser.Scene {
 
     this.createBackground();
 
-    if (this.devMode) {
-      this.createDebugMenu();
-    }
-
     this.createUserOverlay();
 
     this.createMinimapContainer();
 
-    this.input.keyboard.on(
-      "keydown-SEVEN",
-      () => {
-        this.sendCheatMessage();
-      },
-      this,
-    );
+    if (this.devMode) {
+      this.createDebugMenu();
+
+      this.minimapContainer.setVisible(false)
+
+      this.createMinimap();
+
+      this.input.keyboard.on(
+        "keydown-SEVEN",
+        () => {
+          this.sendCheatMessage();
+        },
+        this,
+      );
+    }
 
     // update minimap position on window resize
     window.addEventListener("resize", this.onResize.bind(this), false);
