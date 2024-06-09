@@ -430,17 +430,16 @@ export class Scene extends Phaser.Scene {
     for (const [bulletId, entity] of Object.entries(this.bulletEntities[this.room.sessionId])) {
       const bullet = this.room.state.players.get(this.room.sessionId).bullets.get(bulletId);
 
-      // remove bullet if health <= 0
-      // if (bullet.health <= 0) {
-      //   entity.destroy();
-      //   delete this.bulletEntities[this.room.sessionId][bulletId];
-      //   continue;
-      // }
+      // remove bullet if deleted from server
+      if (!bullet) {
+        entity.destroy();
+        delete this.bulletEntities[this.room.sessionId][bulletId];
+        continue;
+      }
 
       entity.x += Math.cos(bullet.rotation) * 5;
       entity.y += Math.sin(bullet.rotation) * 5;
     }
-
     // #region update remote player locations
 
     // draw local debug ref
@@ -463,6 +462,14 @@ export class Scene extends Phaser.Scene {
 
       // move bullets
       for (const [bulletId, entity] of Object.entries(this.bulletEntities[sessionId])) {
+        const bullet = this.room.state.players.get(sessionId).bullets.get(bulletId);
+
+        // remove bullet if deleted from server
+        if (!bullet) {
+          entity.destroy();
+          delete this.bulletEntities[sessionId][bulletId];
+          continue;
+        }
         const { serverX, serverY } = entity.data.values;
 
         entity.x = Phaser.Math.Linear(entity.x, serverX, 0.2);

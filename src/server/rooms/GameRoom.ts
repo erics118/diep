@@ -87,10 +87,14 @@ export class GameRoom extends Room<RoomState> {
       }
 
       // move bullets
-      for (const [_, bullet] of player.bullets) {
+      for (const [bulletId, bullet] of player.bullets) {
         bullet.x += Math.cos(bullet.rotation) * 5;
         bullet.y += Math.sin(bullet.rotation) * 5;
-        // bullet.health -= 1;
+        bullet.health -= 3;
+
+        if (bullet.health <= 0) {
+          player.bullets.delete(bulletId);
+        }
       }
     }
   }
