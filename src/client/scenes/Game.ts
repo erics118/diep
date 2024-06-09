@@ -212,9 +212,9 @@ export class Game extends Phaser.Scene {
       .setScrollFactor(0);
 
     // Add some game objects to the main container
-    this.minimapContainer
-      .add(
-        this.add.rectangle(
+    this.minimapContainer.add(
+      this.add
+        .rectangle(
           MINIMAP_SIZE / 2,
           MINIMAP_SIZE / 2,
           MINIMAP_SIZE,
@@ -222,8 +222,8 @@ export class Game extends Phaser.Scene {
           colors.minimap.background,
           0.5,
         )
-          .setStrokeStyle(3, colors.minimap.border)
-      )
+        .setStrokeStyle(3, colors.minimap.border),
+    );
   }
 
   // update minimap, username, and health bar position on window resize
