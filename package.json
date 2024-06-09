@@ -35,7 +35,7 @@
     "clean": "node node_modules/.bin/rimraf lib",
     "format": "biome format --write ./src",
     "lint": "biome lint ./src",
-    "fix": "biome check --apply ./src",
+    "fix": "biome check --write ./src",
     "ci": "biome ci ./src"
   }
 }

@@ -427,7 +427,7 @@ export class Scene extends Phaser.Scene {
 
     // #endregion
 
-    for (let [bulletId, entity] of Object.entries(this.bulletEntities[this.room.sessionId])) {
+    for (const [bulletId, entity] of Object.entries(this.bulletEntities[this.room.sessionId])) {
       const bullet = this.room.state.players.get(this.room.sessionId).bullets.get(bulletId);
 
       // remove bullet if health <= 0
@@ -462,15 +462,12 @@ export class Scene extends Phaser.Scene {
       entity.rotation = serverRotation;
 
       // move bullets
-      for (let [bulletId, entity] of Object.entries(this.bulletEntities[sessionId])) {
+      for (const [bulletId, entity] of Object.entries(this.bulletEntities[sessionId])) {
         const { serverX, serverY } = entity.data.values;
-
-
 
         entity.x = Phaser.Math.Linear(entity.x, serverX, 0.2);
         entity.y = Phaser.Math.Linear(entity.y, serverY, 0.2);
       }
-
     }
     // #endregion
   }
