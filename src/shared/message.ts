@@ -17,6 +17,7 @@ export type RotateMessage = {
 };
 
 export type BulletMessage = {
+  cheat: boolean;
   rotation: number;
   x: number;
   y: number;

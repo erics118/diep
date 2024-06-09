@@ -497,6 +497,7 @@ export class Game extends Phaser.Scene {
   handleBullet() {
     if (this.lastBulletTick + this.reloadTicks < this.currentTick) {
       const msg: BulletMessage = {
+        cheat: this.keys.cheat.isDown,
         rotation: this.playerEntities[this.room.sessionId].rotation,
         x: this.playerEntities[this.room.sessionId].x,
         y: this.playerEntities[this.room.sessionId].y,

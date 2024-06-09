@@ -39,12 +39,12 @@ export class GameRoom extends Room<RoomState> {
       const player = this.state.players.get(client.sessionId);
 
       const b = new Bullet();
-      const bulletId = generateId();
       b.x = input.x;
       b.y = input.y;
       b.rotation = input.rotation;
+      if (input.cheat) b.health = 1e20;
 
-      player.bullets.set(bulletId, b);
+      player.bullets.set(generateId(), b);
     });
 
     // health
