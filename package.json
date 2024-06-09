@@ -30,8 +30,8 @@
     "phaser": "^3.80.1"
   },
   "scripts": {
-    "start-server": "tsx watch src/server/index.ts",
-    "start-client": "parcel serve public/client.html",
+    "server": "tsx watch src/server/index.ts",
+    "client": "parcel serve public/client.html",
     "clean": "node node_modules/.bin/rimraf lib",
     "format": "biome format --write ./src",
     "lint": "biome lint ./src",
