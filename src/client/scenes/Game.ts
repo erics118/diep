@@ -19,7 +19,7 @@ export enum Depth {
 }
 
 export class Game extends Phaser.Scene {
-  devMode: boolean = process.env.NODE_ENV === "development";
+  devMode = false;
 
   room: Room<RoomState>;
 
@@ -45,6 +45,11 @@ export class Game extends Phaser.Scene {
   keys: Keys;
 
   minimap: Phaser.Cameras.Scene2D.Camera;
+
+  minimapContainer: Phaser.GameObjects.Container;
+  minimapPlayerEntities: {
+    [sessionId: string]: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+  } = {};
 
   elapsedTime = 0;
   fixedTimeStep = 1000 / 60;
@@ -141,6 +146,12 @@ export class Game extends Phaser.Scene {
       .strokeCircle(15, 15, 9)
       // generate texture
       .generateTexture("enemyBullet", 30, 30);
+
+    this.make
+      .graphics({ x: 0, y: 0 })
+      .fillStyle(colors.minimap.player)
+      .fillTriangle(0, 0, 6, 0, 3, 8)
+      .generateTexture("minimapPlayer", 6, 8);
   }
 
   preload() {
@@ -191,25 +202,28 @@ export class Game extends Phaser.Scene {
       .setDepth(Depth.Overlay);
   }
 
-  // create minimap
-  createMinimap() {
-    this.minimap = this.cameras
-      .add(
+  createMinimapContainer() {
+    // Create a container for the main part of the scene
+    this.minimapContainer = this.add
+      .container(
         this.game.scale.width - MINIMAP_SIZE - 20,
         this.game.scale.height - MINIMAP_SIZE - 20,
-        MINIMAP_SIZE,
-        MINIMAP_SIZE,
-        false,
-        "minimap",
       )
-      .setZoom(MINIMAP_SIZE / MAP_SIZE);
+      .setScrollFactor(0);
 
-    // keep only players on minimap
-    this.minimap.ignore([this.grid]);
-
-    this.minimap.setBackgroundColor(colors.minimap);
-    this.minimap.scrollX = MAP_SIZE / 2;
-    this.minimap.scrollY = MAP_SIZE / 2;
+    // Add some game objects to the main container
+    this.minimapContainer
+      .add(
+        this.add.rectangle(
+          MINIMAP_SIZE / 2,
+          MINIMAP_SIZE / 2,
+          MINIMAP_SIZE,
+          MINIMAP_SIZE,
+          colors.minimap.background,
+          0.5,
+        )
+          .setStrokeStyle(3, colors.minimap.border)
+      )
   }
 
   // update minimap, username, and health bar position on window resize
@@ -218,6 +232,12 @@ export class Game extends Phaser.Scene {
       this.game.scale.width - MINIMAP_SIZE - 20,
       this.game.scale.height - MINIMAP_SIZE - 20,
     );
+
+    this.minimapContainer.setPosition(
+      this.game.scale.width - MINIMAP_SIZE - 20,
+      this.game.scale.height - MINIMAP_SIZE - 20,
+    );
+
     this.username.setPosition(this.game.scale.width / 2, this.game.scale.height - 70);
     this.healthBar.setPosition(this.game.scale.width / 2, this.game.scale.height - 40);
   }
@@ -234,6 +254,17 @@ export class Game extends Phaser.Scene {
         .setDepth(Depth.Players);
 
       this.playerEntities[sessionId] = entity;
+
+      const minimapEntity = this.physics.add
+        .image(
+          (player.x / MAP_SIZE) * MINIMAP_SIZE,
+          (player.y / MAP_SIZE) * MINIMAP_SIZE,
+          "minimapPlayer",
+        )
+        .setDepth(Depth.Players);
+
+      this.minimapPlayerEntities[sessionId] = minimapEntity;
+      this.minimapContainer.add(minimapEntity);
 
       // entity.setCollideWorldBounds(true);
 
@@ -321,6 +352,7 @@ export class Game extends Phaser.Scene {
       pointer.worldY,
     );
     this.playerEntities[this.room.sessionId].setRotation(pointerAngle);
+    this.minimapPlayerEntities[this.room.sessionId].setRotation(pointerAngle);
 
     this.sendRotateMessage({
       rotation: pointerAngle,
@@ -328,6 +360,12 @@ export class Game extends Phaser.Scene {
   }
 
   async create() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const devMode = urlParams.get("dev") === "true";
+    if (devMode) {
+      this.devMode = true;
+    }
+
     // set world boundaries
     this.cameras.main.setBounds(0, 0, MAP_SIZE, MAP_SIZE);
     this.physics.world.setBounds(0, 0, MAP_SIZE, MAP_SIZE);
@@ -353,7 +391,7 @@ export class Game extends Phaser.Scene {
 
     this.createUserOverlay();
 
-    this.createMinimap();
+    this.createMinimapContainer();
 
     this.input.keyboard.on(
       "keydown-SEVEN",
@@ -453,6 +491,11 @@ export class Game extends Phaser.Scene {
     if (this.playerEntities[this.room.sessionId].y > MAP_SIZE - MAP_PADDING) {
       this.playerEntities[this.room.sessionId].y = MAP_SIZE - MAP_PADDING;
     }
+
+    this.minimapPlayerEntities[this.room.sessionId].x =
+      (this.playerEntities[this.room.sessionId].x / MAP_SIZE) * MINIMAP_SIZE;
+    this.minimapPlayerEntities[this.room.sessionId].y =
+      (this.playerEntities[this.room.sessionId].y / MAP_SIZE) * MINIMAP_SIZE;
 
     for (const [bulletId, entity] of Object.entries(this.bulletEntities[this.room.sessionId])) {
       const bullet = this.room.state.players.get(this.room.sessionId).bullets.get(bulletId);
