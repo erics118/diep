@@ -3,6 +3,7 @@ import Phaser from "phaser";
 import { BACKEND_URL, GRID_SIZE, MAP_PADDING, MAP_SIZE, MINIMAP_SIZE } from "../../shared/config";
 import {
   type BulletMessage,
+  type CheatMessage,
   MessageType,
   type MoveMessage,
   type RotateMessage,
@@ -83,8 +84,9 @@ export class Game extends Phaser.Scene {
     this.room.send(MessageType.BULLET, msg);
   }
 
-  sendCheatMessage() {
-    this.room.send(MessageType.CHEAT);
+  sendCheatMessage(msg: CheatMessage) {
+    console.log(msg);
+    this.room.send(MessageType.CHEAT, msg);
   }
 
   // create graphics
@@ -212,7 +214,7 @@ export class Game extends Phaser.Scene {
         false,
         "minimap",
       )
-      .setZoom(MINIMAP_SIZE * 2 / MAP_SIZE);
+      .setZoom((MINIMAP_SIZE * 2) / MAP_SIZE);
 
     // keep only players on minimap
     this.minimap.ignore([this.debugMenu, this.grid, this.username, this.healthBar]);
@@ -290,7 +292,6 @@ export class Game extends Phaser.Scene {
       this.cameras.main.startFollow(entity, true, 0.08, 0.08);
 
       if (this.devMode) {
-
         // create local and remote debug rectangles
         this.localRef = this.add
           .rectangle(0, 0, entity.width, entity.height)
@@ -413,17 +414,28 @@ export class Game extends Phaser.Scene {
     if (this.devMode) {
       this.createDebugMenu();
 
-      this.minimapContainer.setVisible(false)
+      this.minimapContainer.setVisible(false);
 
       this.createMinimap();
 
+      this.input.keyboard.on("keydown-K", () => this.sendCheatMessage({ speed: true }), this);
+      this.input.keyboard.on("keydown-O", () => this.sendCheatMessage({ bulletSpeed: true }), this);
       this.input.keyboard.on(
-        "keydown-SEVEN",
-        () => {
-          this.sendCheatMessage();
-        },
+        "keydown-P",
+        () => this.sendCheatMessage({ bulletDamage: true }),
         this,
       );
+      this.input.keyboard.on(
+        "keydown-L",
+        () => this.sendCheatMessage({ infiniteHealth: true }),
+        this,
+      );
+      this.input.keyboard.on(
+        "keydown-I",
+        () => this.sendCheatMessage({ invisibility: true }),
+        this,
+      );
+      this.input.keyboard.on("keydown-J", () => this.sendCheatMessage({ reload: true }), this);
     }
 
     // update minimap position on window resize
@@ -475,13 +487,23 @@ export class Game extends Phaser.Scene {
     }
 
     if (this.devMode) {
+      let cheatString = "";
+      const player = this.room.state.players.get(this.room.sessionId);
+      if (player.cheatSpeed) cheatString += "S ";
+      if (player.cheatBulletSpeed) cheatString += "BS ";
+      if (player.cheatBulletDamage) cheatString += "BD ";
+      if (player.cheatInfiniteHealth) cheatString += "IH ";
+      if (player.cheatInvisibility) cheatString += "I ";
+      if (player.cheatReload) cheatString += "R ";
+
       this.debugMenu.text =
         `Frame rate: ${this.game.loop.actualFps}` +
         `\nTick: ${this.currentTick}` +
         `\n(${this.playerEntities[this.room.sessionId].x.toFixed(0)}, ${this.playerEntities[this.room.sessionId].y.toFixed(0)})` +
         `\nRoom Id: ${this.room.roomId}` +
         `\nSession Id: ${this.room.sessionId}` +
-        `\nNum players: ${this.room.state.players.size}`;
+        `\nNum players: ${this.room.state.players.size}` +
+        `\n${cheatString}`;
     }
 
     this.healthBar.text = `Health: ${this.room.state.players.get(this.room.sessionId).health}`;
@@ -490,7 +512,7 @@ export class Game extends Phaser.Scene {
   // move local player and bullets
   moveLocal(msg: MoveMessage) {
     const player = this.room.state.players.get(this.room.sessionId);
-    const velocity = player.cheat ? 6 : player.velocity;
+    const velocity = player.cheatSpeed ? 5 : player.velocity;
 
     if (msg.left) {
       this.playerEntities[this.room.sessionId].x -= velocity;
@@ -531,7 +553,7 @@ export class Game extends Phaser.Scene {
         delete this.bulletEntities[this.room.sessionId][bulletId];
         continue;
       }
-      const velocity = player.cheat ? 10 : bullet.velocity;
+      const velocity = player.cheatBulletSpeed ? 10 : bullet.velocity;
 
       entity.x += Math.cos(bullet.rotation) * velocity;
       entity.y += Math.sin(bullet.rotation) * velocity;
@@ -552,6 +574,8 @@ export class Game extends Phaser.Scene {
         continue;
       }
 
+      entity.setVisible(!player.cheatInvisibility);
+
       const { serverX, serverY, serverRotation } = entity.data.values;
 
       entity.x = Phaser.Math.Linear(entity.x, serverX, 0.2);
@@ -568,6 +592,8 @@ export class Game extends Phaser.Scene {
           delete this.bulletEntities[sessionId][bulletId];
           continue;
         }
+        entity.setVisible(!player.cheatInvisibility);
+
         const { serverX, serverY } = entity.data.values;
 
         entity.x = Phaser.Math.Linear(entity.x, serverX, 0.2);
@@ -592,7 +618,7 @@ export class Game extends Phaser.Scene {
 
   handleBullet() {
     if (
-      this.room.state.players.get(this.room.sessionId).cheat ||
+      this.room.state.players.get(this.room.sessionId).cheatReload ||
       this.lastBulletTick + this.reloadTicks < this.currentTick
     ) {
       const msg: BulletMessage = {

@@ -2,6 +2,7 @@ import { type Client, Room, generateId } from "colyseus";
 import { MAP_PADDING, MAP_SIZE } from "../../shared/config";
 import {
   type BulletMessage,
+  type CheatMessage,
   MessageType,
   type MoveMessage,
   type RotateMessage,
@@ -46,10 +47,15 @@ export class GameRoom extends Room<RoomState> {
     });
 
     // cheat
-    this.onMessage(MessageType.CHEAT, (client) => {
+    this.onMessage(MessageType.CHEAT, (client, input: CheatMessage) => {
       const player = this.state.players.get(client.sessionId);
 
-      player.cheat = !player.cheat;
+      if (input.speed) player.cheatSpeed = !player.cheatSpeed;
+      if (input.bulletSpeed) player.cheatBulletSpeed = !player.cheatBulletSpeed;
+      if (input.bulletDamage) player.cheatBulletDamage = !player.cheatBulletDamage;
+      if (input.infiniteHealth) player.cheatInfiniteHealth = !player.cheatInfiniteHealth;
+      if (input.invisibility) player.cheatInvisibility = !player.cheatInvisibility;
+      if (input.reload) player.cheatReload = !player.cheatReload;
     });
 
     let elapsedTime = 0;
@@ -66,7 +72,7 @@ export class GameRoom extends Room<RoomState> {
   fixedTick(_timeStep: number) {
     for (const [_, player] of this.state.players) {
       let input: MoveMessage;
-      const velocity = player.cheat ? 6 : player.velocity;
+      const velocity = player.cheatSpeed ? 5 : player.velocity;
 
       // dequeue player inputs
       while ((input = player.moveQueue.shift())) {
@@ -97,7 +103,7 @@ export class GameRoom extends Room<RoomState> {
 
       // move bullets
       for (const [bulletId, bullet] of player.bullets) {
-        const velocity = player.cheat ? 10 : bullet.velocity;
+        const velocity = player.cheatBulletSpeed ? 10 : bullet.velocity;
 
         bullet.x += Math.cos(bullet.rotation) * velocity;
         bullet.y += Math.sin(bullet.rotation) * velocity;
@@ -120,17 +126,14 @@ export class GameRoom extends Room<RoomState> {
           const distance = Math.sqrt((bullet.x - target.x) ** 2 + (bullet.y - target.y) ** 2);
 
           if (distance <= 25) {
-            if (player.cheat && target.cheat) {
-              continue;
-            }
             // kill target
-            if (player.cheat) {
+            if (player.cheatBulletDamage) {
               target.isDead = true;
               continue;
             }
 
             // destroy bullet
-            if (target.cheat) {
+            if (target.cheatInfiniteHealth) {
               player.bullets.delete(bulletId);
               continue;
             }

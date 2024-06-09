@@ -23,5 +23,10 @@ export type BulletMessage = {
 };
 
 export type CheatMessage = {
-  cheat: boolean;
+  speed?: boolean;
+  bulletSpeed?: boolean;
+  bulletDamage?: boolean;
+  infiniteHealth?: boolean;
+  invisibility?: boolean;
+  reload?: boolean;
 };

@@ -18,7 +18,12 @@ export class Player extends Schema {
   @type("number") health = 5000;
   @type("boolean") isDead = false;
 
-  @type("boolean") cheat = false;
+  @type("boolean") cheatSpeed = false;
+  @type("boolean") cheatBulletSpeed = false;
+  @type("boolean") cheatBulletDamage = false;
+  @type("boolean") cheatInfiniteHealth = false;
+  @type("boolean") cheatInvisibility = false;
+  @type("boolean") cheatReload = false;
 
   @type({ map: Bullet }) bullets = new MapSchema<Bullet>();
 
