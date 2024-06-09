@@ -19,10 +19,9 @@ export enum Depth {
   Overlay = 1,
 }
 
-export class Scene extends Phaser.Scene {
+export class Game extends Phaser.Scene {
   room: Room<RoomState>;
 
-  // playerEntities[this.room.sessionId]: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
   playerEntities: {
     [sessionId: string]: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
   } = {};

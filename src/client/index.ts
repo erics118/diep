@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 
-import { Scene } from "./scenes/Scene";
-import { SceneSelector } from "./scenes/SceneSelector";
+import { Game } from "./scenes/Game";
+import { StartScreen } from "./scenes/StartScreen";
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO, // selects renderer to use
@@ -10,14 +10,13 @@ const config: Phaser.Types.Core.GameConfig = {
     forceSetTimeOut: true,
     smoothStep: false,
   },
-  // backgroundColor: "#",
   physics: {
     default: "arcade",
   },
   scale: {
     mode: Phaser.Scale.RESIZE,
   },
-  scene: [/* SceneSelector, */ Scene],
+  scene: [StartScreen, Game],
 };
 
 const game = new Phaser.Game(config);
