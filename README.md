@@ -8,6 +8,8 @@ Move with WASD or arrow keys, press or hold SPACE to shoot.
 Play with other people on the same local network as you.
 Goal: survive and kill other players.
 
+Add `?u={username}` to the URL to pre-fill with a username
+
 ## How to run
 
 ### Development
@@ -16,6 +18,8 @@ Goal: survive and kill other players.
   - Run server `npm run start:server`
 - Client
   - Run client `npm run start:client`
+
+You will have to change the ip in the constant `BACKEND_URL` in `./src/shared/config.ts` to your local ip.
 
 ### Production
 
@@ -32,6 +36,8 @@ Goal: survive and kill other players.
 ## Dev Cheats
 
 </summary>
+
+Enable dev cheats by adding `?dev=V1St` to the URL. Configure the key in `./src/shared/config.ts`.
 
 - `K` to increase speed to 2.5x
 - `O` to increase bullet speed to 2x

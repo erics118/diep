@@ -1,5 +1,5 @@
 {
-  "name": "diep-clone",
+  "name": "diep",
   "version": "0.1.0",
   "description": "diep.io clone",
   "author": "erics118",
@@ -9,7 +9,6 @@
     "@parcel/plugin": "^2.12.0",
     "@types/node": "^20.14.2",
     "parcel": "^2.12.0",
-    "parcel-resolver-ts-base-url": "^1.3.1",
     "process": "^0.11.10",
     "rimraf": "^5.0.7",
     "tsx": "^4.15.1",
@@ -18,6 +17,7 @@
   "dependencies": {
     "@colyseus/monitor": "^0.15.6",
     "@colyseus/playground": "^0.15.12",
+    "@colyseus/schema": "^2.0.32",
     "@colyseus/tools": "^0.15.39",
     "colyseus": "^0.15.17",
     "colyseus.js": "^0.15.22",
@@ -32,7 +32,7 @@
     "build:client": "rimraf dist && parcel build public/client.html",
     "start:server:prod": "node lib/server/index.js",
     "start:client:prod": "serve dist",
-    "clean": "rimraf lib && rimraf dist",
+    "clean": "rimraf lib dist .devmode.json .parcel-cache",
     "format": "biome format --write ./src",
     "lint": "biome lint ./src",
     "fix": "biome check --write ./src",

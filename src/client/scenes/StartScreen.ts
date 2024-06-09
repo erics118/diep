@@ -41,7 +41,7 @@ export class StartScreen extends Phaser.Scene {
 
   create() {
     const urlParams = new URLSearchParams(window.location.search);
-    const username = urlParams.get("u");
+    const username = urlParams.get("u") || "";
 
     this.input.keyboard.addCapture("SPACE");
 
@@ -53,18 +53,19 @@ export class StartScreen extends Phaser.Scene {
       fontFamily: "Arial",
     };
 
-    this.add.text(this.game.scale.width / 2 - 200, (this.game.scale.height * 2) / 5, "Enter your name:", textStyle);
+    this.add
+      .text(this.game.scale.width / 2, (this.game.scale.height * 2) / 5, "Enter your name:", textStyle)
+      .setOrigin(0.5, 0.5);
 
-    this.textEntry = this.add.text(this.game.scale.width / 2 + 50, (this.game.scale.height * 2) / 5, "", textStyle);
-
-    if (username) {
-      this.textEntry.text = username;
-    }
+    this.textEntry = this.add
+      .text(this.game.scale.width / 2, (this.game.scale.height * 2) / 5 + 40, username, textStyle)
+      .setOrigin(0.5, 0.5);
 
     this.add
-      .text(this.game.scale.width / 2, (this.game.scale.height * 3) / 5, "Start Game", textStyle)
+      .text(this.game.scale.width / 2, (this.game.scale.height * 2) / 5 + 120, "Start Game", textStyle)
       .setInteractive()
       .setPadding(6)
+      .setOrigin(0.5, 0.5)
       .on("pointerdown", this.startGame.bind(this));
 
     this.input.keyboard.on("keydown", this.onKeydown.bind(this));

@@ -1,6 +1,6 @@
 import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
-import { BACKEND_URL, GRID_SIZE, MAP_PADDING, MAP_SIZE, MINIMAP_SIZE } from "../../shared/config";
+import { BACKEND_URL, DEV_KEY, GRID_SIZE, MAP_PADDING, MAP_SIZE, MINIMAP_SIZE } from "../../shared/config";
 import {
   type BulletMessage,
   type CheatMessage,
@@ -357,7 +357,7 @@ export class Game extends Phaser.Scene {
 
   async create() {
     const urlParams = new URLSearchParams(window.location.search);
-    const dev = urlParams.get("dev") === "V1StGXR8Z5jdHi6B";
+    const dev = urlParams.get("dev") === DEV_KEY;
     if (dev) {
       this.devMode = true;
     }

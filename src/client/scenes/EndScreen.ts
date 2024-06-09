@@ -24,10 +24,10 @@ export class EndScreen extends Phaser.Scene {
 
     const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
       color: colors.username,
-      fontSize: "100px",
+      fontSize: "200px",
       fontFamily: "Arial",
     };
 
-    this.add.text(100, this.game.scale.height / 2, "YOU DIED", textStyle);
+    this.add.text(this.game.scale.width / 2, this.game.scale.height / 2, "YOU DIED", textStyle).setOrigin(0.5, 0.5);
   }
 }
