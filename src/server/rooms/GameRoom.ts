@@ -1,4 +1,4 @@
-import { type Client, Room } from "colyseus";
+import { type Client, Room, generateId } from "colyseus";
 import { MAP_SIZE } from "#shared/config";
 import {
   type BulletMessage,
@@ -39,11 +39,12 @@ export class GameRoom extends Room<RoomState> {
       const player = this.state.players.get(client.sessionId);
 
       const b = new Bullet();
+      const bulletId = generateId();
       b.x = input.x;
       b.y = input.y;
       b.rotation = input.rotation;
 
-      player.bullets.push(b);
+      player.bullets.set(bulletId, b);
     });
 
     // health
@@ -86,10 +87,10 @@ export class GameRoom extends Room<RoomState> {
       }
 
       // move bullets
-      for (const bullet of player.bullets) {
+      for (const [_, bullet] of player.bullets) {
         bullet.x += Math.cos(bullet.rotation) * 5;
         bullet.y += Math.sin(bullet.rotation) * 5;
-        bullet.health -= 1;
+        // bullet.health -= 1;
       }
     }
   }
