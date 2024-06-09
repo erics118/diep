@@ -3,7 +3,7 @@ import type { SceneData } from "#shared/types";
 
 export class StartScreen extends Phaser.Scene {
   textEntry: Phaser.GameObjects.Text;
-  
+
   constructor() {
     super({ key: "selector", active: true });
   }
