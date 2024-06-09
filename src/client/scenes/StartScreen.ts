@@ -35,7 +35,10 @@ export class StartScreen extends Phaser.Scene {
     // immediately start game if username is present in url
     const urlParams = new URLSearchParams(window.location.search);
     const username = urlParams.get("u");
+
     if (username) {
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
       this.startGame(username);
     }
 
