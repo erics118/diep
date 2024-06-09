@@ -11,3 +11,5 @@ export const BACKEND_HTTP_URL = BACKEND_URL.replace("ws", "http");
 export const MAP_SIZE = 5000;
 export const MINIMAP_SIZE = 140;
 export const GRID_SIZE = 20;
+
+export const PLAYER_VELOCITY = 2;

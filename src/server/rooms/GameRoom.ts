@@ -66,7 +66,6 @@ export class GameRoom extends Room<RoomState> {
   }
 
   fixedTick(_timeStep: number) {
-    const velocity = 2;
 
     for (const [_, player] of this.state.players) {
       let input: MoveMessage;
@@ -74,15 +73,15 @@ export class GameRoom extends Room<RoomState> {
       // dequeue player inputs
       while ((input = player.moveQueue.shift())) {
         if (input.left) {
-          player.x -= velocity;
+          player.x -= player.velocity;
         } else if (input.right) {
-          player.x += velocity;
+          player.x += player.velocity;
         }
 
         if (input.up) {
-          player.y -= velocity;
+          player.y -= player.velocity;
         } else if (input.down) {
-          player.y += velocity;
+          player.y += player.velocity;
         }
       }
 

@@ -426,18 +426,18 @@ export class Game extends Phaser.Scene {
 
   // move local player and bullets
   moveLocal(msg: MoveMessage) {
-    const velocity = 2;
+    const player = this.room.state.players.get(this.room.sessionId);
 
     if (msg.left) {
-      this.playerEntities[this.room.sessionId].x -= velocity;
+      this.playerEntities[this.room.sessionId].x -= player.velocity;
     } else if (msg.right) {
-      this.playerEntities[this.room.sessionId].x += velocity;
+      this.playerEntities[this.room.sessionId].x += player.velocity;
     }
 
     if (msg.up) {
-      this.playerEntities[this.room.sessionId].y -= velocity;
+      this.playerEntities[this.room.sessionId].y -= player.velocity;
     } else if (msg.down) {
-      this.playerEntities[this.room.sessionId].y += velocity;
+      this.playerEntities[this.room.sessionId].y += player.velocity;
     }
 
     for (const [bulletId, entity] of Object.entries(this.bulletEntities[this.room.sessionId])) {

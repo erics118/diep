@@ -12,6 +12,7 @@ export class Player extends Schema {
   @type("number") x: number;
   @type("number") y: number;
   @type("number") rotation = 0;
+  @type("number") velocity = 2;
 
   @type("number") health = 5000;
   @type("boolean") isDead = false;
