@@ -52,7 +52,7 @@ export class Game extends Phaser.Scene {
 
   pointerLocation: { x: number; y: number };
 
-  reloadTicks = 0;
+  reloadTicks = 10;
   lastBulletTick = 0;
 
   usernameStr: string;
