@@ -1,16 +1,15 @@
 import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
-import { BACKEND_URL, GRID_SIZE, MAP_SIZE, MINIMAP_SIZE } from "#shared/config";
+import { BACKEND_URL, GRID_SIZE, MAP_PADDING, MAP_SIZE, MINIMAP_SIZE } from "../../shared/config";
 import {
   type BulletMessage,
-  type HealthMessage,
   MessageType,
   type MoveMessage,
   type RotateMessage,
-} from "#shared/message";
-import type { Bullet, Player, RoomState } from "#shared/state";
-import { colors } from "#shared/style";
-import type { Keys, SceneData } from "#shared/types";
+} from "../../shared/message";
+import type { Bullet, Player, RoomState } from "../../shared/state";
+import { colors } from "../../shared/style";
+import type { Keys, SceneData } from "../../shared/types";
 
 export enum Depth {
   Background = -2,
@@ -20,6 +19,8 @@ export enum Depth {
 }
 
 export class Game extends Phaser.Scene {
+  devMode: boolean = process.env.NODE_ENV === "development";
+
   room: Room<RoomState>;
 
   playerEntities: {
@@ -77,8 +78,8 @@ export class Game extends Phaser.Scene {
     this.room.send(MessageType.BULLET, msg);
   }
 
-  sendHealthMessage(msg: HealthMessage) {
-    this.room.send(MessageType.HEALTH, msg);
+  sendCheatMessage() {
+    this.room.send(MessageType.CHEAT);
   }
 
   // create graphics
@@ -204,7 +205,7 @@ export class Game extends Phaser.Scene {
       .setZoom(MINIMAP_SIZE / MAP_SIZE);
 
     // keep only players on minimap
-    this.minimap.ignore([this.debugMenu, this.grid]);
+    this.minimap.ignore([this.grid]);
 
     this.minimap.setBackgroundColor(colors.minimap);
     this.minimap.scrollX = MAP_SIZE / 2;
@@ -234,26 +235,28 @@ export class Game extends Phaser.Scene {
 
       this.playerEntities[sessionId] = entity;
 
-      entity.setCollideWorldBounds(true);
+      // entity.setCollideWorldBounds(true);
 
       // make camera follow player
       this.cameras.main.startFollow(entity, true, 0.08, 0.08);
 
-      // create local and remote debug rectangles
-      this.localRef = this.add
-        .rectangle(0, 0, entity.width, entity.height)
-        .setDepth(Depth.Players)
-        .setStrokeStyle(1, colors.debug.local);
+      if (this.devMode) {
+        // create local and remote debug rectangles
+        this.localRef = this.add
+          .rectangle(0, 0, entity.width, entity.height)
+          .setDepth(Depth.Players)
+          .setStrokeStyle(1, colors.debug.local);
 
-      this.remoteRef = this.add
-        .rectangle(0, 0, entity.width, entity.height)
-        .setDepth(Depth.Players)
-        .setStrokeStyle(1, colors.debug.remote);
+        this.remoteRef = this.add
+          .rectangle(0, 0, entity.width, entity.height)
+          .setDepth(Depth.Players)
+          .setStrokeStyle(1, colors.debug.remote);
 
-      player.onChange(() => {
-        this.remoteRef.x = player.x;
-        this.remoteRef.y = player.y;
-      });
+        player.onChange(() => {
+          this.remoteRef.x = player.x;
+          this.remoteRef.y = player.y;
+        });
+      }
 
       player.bullets.onAdd((bullet: Bullet, bulletId) => {
         const entity = this.physics.add
@@ -340,16 +343,25 @@ export class Game extends Phaser.Scene {
       s: Phaser.Input.Keyboard.KeyCodes.S,
       d: Phaser.Input.Keyboard.KeyCodes.D,
       space: Phaser.Input.Keyboard.KeyCodes.SPACE,
-      cheat: Phaser.Input.Keyboard.KeyCodes.CLOSED_BRACKET,
     }) as Keys;
 
     this.createBackground();
 
-    this.createDebugMenu();
+    if (this.devMode) {
+      this.createDebugMenu();
+    }
 
     this.createUserOverlay();
 
     this.createMinimap();
+
+    this.input.keyboard.on(
+      "keydown-SEVEN",
+      () => {
+        this.sendCheatMessage();
+      },
+      this,
+    );
 
     // update minimap position on window resize
     window.addEventListener("resize", this.onResize.bind(this), false);
@@ -399,14 +411,15 @@ export class Game extends Phaser.Scene {
       this.fixedTick(time, this.fixedTimeStep);
     }
 
-    // debug menu
-    this.debugMenu.text =
-      `Frame rate: ${this.game.loop.actualFps}` +
-      `\nTick: ${this.currentTick}` +
-      `\n(${this.playerEntities[this.room.sessionId].x.toFixed(0)}, ${this.playerEntities[this.room.sessionId].y.toFixed(0)})` +
-      `\nRoom Id: ${this.room.roomId}` +
-      `\nSession Id: ${this.room.sessionId}` +
-      `\nNum players: ${this.room.state.players.size}`;
+    if (this.devMode) {
+      this.debugMenu.text =
+        `Frame rate: ${this.game.loop.actualFps}` +
+        `\nTick: ${this.currentTick}` +
+        `\n(${this.playerEntities[this.room.sessionId].x.toFixed(0)}, ${this.playerEntities[this.room.sessionId].y.toFixed(0)})` +
+        `\nRoom Id: ${this.room.roomId}` +
+        `\nSession Id: ${this.room.sessionId}` +
+        `\nNum players: ${this.room.state.players.size}`;
+    }
 
     this.healthBar.text = `Health: ${this.room.state.players.get(this.room.sessionId).health}`;
   }
@@ -414,17 +427,31 @@ export class Game extends Phaser.Scene {
   // move local player and bullets
   moveLocal(msg: MoveMessage) {
     const player = this.room.state.players.get(this.room.sessionId);
+    const velocity = player.cheat ? 6 : player.velocity;
 
     if (msg.left) {
-      this.playerEntities[this.room.sessionId].x -= player.velocity;
+      this.playerEntities[this.room.sessionId].x -= velocity;
     } else if (msg.right) {
-      this.playerEntities[this.room.sessionId].x += player.velocity;
+      this.playerEntities[this.room.sessionId].x += velocity;
     }
 
     if (msg.up) {
-      this.playerEntities[this.room.sessionId].y -= player.velocity;
+      this.playerEntities[this.room.sessionId].y -= velocity;
     } else if (msg.down) {
-      this.playerEntities[this.room.sessionId].y += player.velocity;
+      this.playerEntities[this.room.sessionId].y += velocity;
+    }
+
+    if (this.playerEntities[this.room.sessionId].x < MAP_PADDING) {
+      this.playerEntities[this.room.sessionId].x = MAP_PADDING;
+    }
+    if (this.playerEntities[this.room.sessionId].x > MAP_SIZE - MAP_PADDING) {
+      this.playerEntities[this.room.sessionId].x = MAP_SIZE - MAP_PADDING;
+    }
+    if (this.playerEntities[this.room.sessionId].y < MAP_PADDING) {
+      this.playerEntities[this.room.sessionId].y = MAP_PADDING;
+    }
+    if (this.playerEntities[this.room.sessionId].y > MAP_SIZE - MAP_PADDING) {
+      this.playerEntities[this.room.sessionId].y = MAP_SIZE - MAP_PADDING;
     }
 
     for (const [bulletId, entity] of Object.entries(this.bulletEntities[this.room.sessionId])) {
@@ -436,9 +463,10 @@ export class Game extends Phaser.Scene {
         delete this.bulletEntities[this.room.sessionId][bulletId];
         continue;
       }
+      const velocity = player.cheat ? 10 : bullet.velocity;
 
-      entity.x += Math.cos(bullet.rotation) * 5;
-      entity.y += Math.sin(bullet.rotation) * 5;
+      entity.x += Math.cos(bullet.rotation) * velocity;
+      entity.y += Math.sin(bullet.rotation) * velocity;
     }
   }
 
@@ -495,9 +523,11 @@ export class Game extends Phaser.Scene {
   }
 
   handleBullet() {
-    if (this.lastBulletTick + this.reloadTicks < this.currentTick) {
+    if (
+      this.room.state.players.get(this.room.sessionId).cheat ||
+      this.lastBulletTick + this.reloadTicks < this.currentTick
+    ) {
       const msg: BulletMessage = {
-        cheat: this.keys.cheat.isDown,
         rotation: this.playerEntities[this.room.sessionId].rotation,
         x: this.playerEntities[this.room.sessionId].x,
         y: this.playerEntities[this.room.sessionId].y,
@@ -531,9 +561,11 @@ export class Game extends Phaser.Scene {
 
     this.moveLocal(msg);
 
-    // draw local debug ref
-    this.localRef.x = this.playerEntities[this.room.sessionId].x;
-    this.localRef.y = this.playerEntities[this.room.sessionId].y;
+    if (this.devMode) {
+      // draw local debug ref
+      this.localRef.x = this.playerEntities[this.room.sessionId].x;
+      this.localRef.y = this.playerEntities[this.room.sessionId].y;
+    }
 
     this.moveRemote();
   }

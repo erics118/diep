@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { SceneData } from "#shared/types";
+import type { SceneData } from "../../shared/types";
 
 export class StartScreen extends Phaser.Scene {
   textEntry: Phaser.GameObjects.Text;

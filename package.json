@@ -27,12 +27,17 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "express-basic-auth": "^1.2.1",
-    "phaser": "^3.80.1"
+    "phaser": "^3.80.1",
+    "serve": "^14.2.3"
   },
   "scripts": {
     "server": "tsx watch src/server/index.ts",
     "client": "parcel serve public/client.html",
-    "clean": "node node_modules/.bin/rimraf lib",
+    "build-server": "rimraf lib && tsc",
+    "build-client": "rimraf dist && parcel build public/client.html && mv dist/client.html dist/index.html",
+    "run-server": "node lib/server/index.js",
+    "run-client": "serve dist",
+    "clean": "rimraf lib && rimraf dist",
     "format": "biome format --write ./src",
     "lint": "biome lint ./src",
     "fix": "biome check --write ./src",

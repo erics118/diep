@@ -10,7 +10,6 @@ export type Keys = {
   s: Phaser.Input.Keyboard.Key;
   d: Phaser.Input.Keyboard.Key;
   space: Phaser.Input.Keyboard.Key;
-  cheat: Phaser.Input.Keyboard.Key;
 };
 
 export type SceneData = {

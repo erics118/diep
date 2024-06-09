@@ -2,7 +2,7 @@ export enum MessageType {
   MOVE = 0,
   ROTATION = 1,
   BULLET = 2,
-  HEALTH = 3,
+  CHEAT = 3,
 }
 
 export type MoveMessage = {
@@ -17,12 +17,11 @@ export type RotateMessage = {
 };
 
 export type BulletMessage = {
-  cheat: boolean;
   rotation: number;
   x: number;
   y: number;
 };
 
-export type HealthMessage = {
-  health: number;
+export type CheatMessage = {
+  cheat: boolean;
 };

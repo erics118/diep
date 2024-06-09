@@ -1,13 +1,12 @@
 import { type Client, Room, generateId } from "colyseus";
-import { MAP_SIZE } from "#shared/config";
+import { MAP_PADDING, MAP_SIZE } from "../../shared/config";
 import {
   type BulletMessage,
-  type HealthMessage,
   MessageType,
   type MoveMessage,
   type RotateMessage,
-} from "#shared/message";
-import { Bullet, Player, RoomState } from "#shared/state";
+} from "../../shared/message";
+import { Bullet, Player, RoomState } from "../../shared/state";
 
 export class GameRoom extends Room<RoomState> {
   fixedTimeStep = 1000 / 60;
@@ -42,16 +41,15 @@ export class GameRoom extends Room<RoomState> {
       b.x = input.x;
       b.y = input.y;
       b.rotation = input.rotation;
-      if (input.cheat) b.health = 1e20;
 
       player.bullets.set(generateId(), b);
     });
 
-    // health
-    this.onMessage(MessageType.HEALTH, (client, input: HealthMessage) => {
+    // cheat
+    this.onMessage(MessageType.CHEAT, (client) => {
       const player = this.state.players.get(client.sessionId);
 
-      player.health = input.health;
+      player.cheat = !player.cheat;
     });
 
     let elapsedTime = 0;
@@ -68,26 +66,41 @@ export class GameRoom extends Room<RoomState> {
   fixedTick(_timeStep: number) {
     for (const [_, player] of this.state.players) {
       let input: MoveMessage;
+      const velocity = player.cheat ? 6 : player.velocity;
 
       // dequeue player inputs
       while ((input = player.moveQueue.shift())) {
         if (input.left) {
-          player.x -= player.velocity;
+          player.x -= velocity;
         } else if (input.right) {
-          player.x += player.velocity;
+          player.x += velocity;
         }
 
         if (input.up) {
-          player.y -= player.velocity;
+          player.y -= velocity;
         } else if (input.down) {
-          player.y += player.velocity;
+          player.y += velocity;
         }
+      }
+      if (player.x < MAP_PADDING) {
+        player.x = MAP_PADDING;
+      }
+      if (player.x > MAP_SIZE - MAP_PADDING) {
+        player.x = MAP_SIZE - MAP_PADDING;
+      }
+      if (player.y < MAP_PADDING) {
+        player.y = MAP_PADDING;
+      }
+      if (player.y > MAP_SIZE - MAP_PADDING) {
+        player.y = MAP_SIZE - MAP_PADDING;
       }
 
       // move bullets
       for (const [bulletId, bullet] of player.bullets) {
-        bullet.x += Math.cos(bullet.rotation) * 5;
-        bullet.y += Math.sin(bullet.rotation) * 5;
+        const velocity = player.cheat ? 10 : bullet.velocity;
+
+        bullet.x += Math.cos(bullet.rotation) * velocity;
+        bullet.y += Math.sin(bullet.rotation) * velocity;
         bullet.health -= 3;
 
         if (bullet.health <= 0) {
@@ -107,6 +120,21 @@ export class GameRoom extends Room<RoomState> {
           const distance = Math.sqrt((bullet.x - target.x) ** 2 + (bullet.y - target.y) ** 2);
 
           if (distance <= 25) {
+            if (player.cheat && target.cheat) {
+              continue;
+            }
+            // kill target
+            if (player.cheat) {
+              target.isDead = true;
+              continue;
+            }
+
+            // destroy bullet
+            if (target.cheat) {
+              player.bullets.delete(bulletId);
+              continue;
+            }
+
             if (target.health <= bullet.health) {
               bullet.health -= target.health;
               target.isDead = true;
@@ -126,8 +154,9 @@ export class GameRoom extends Room<RoomState> {
     console.log(client.sessionId, "joined!");
 
     const player = new Player();
-    player.x = Math.random() * 500 + 200;
-    player.y = Math.random() * 500 + 200;
+
+    player.x = Math.random() * (MAP_SIZE - 4 * MAP_PADDING) + 2 * MAP_PADDING;
+    player.y = Math.random() * (MAP_SIZE - 4 * MAP_PADDING) + 2 * MAP_PADDING;
 
     this.state.players.set(client.sessionId, player);
   }

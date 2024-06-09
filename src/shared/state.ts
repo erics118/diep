@@ -6,6 +6,7 @@ export class Bullet extends Schema {
   @type("number") y: number;
   @type("number") rotation: number;
   @type("number") health = 500;
+  @type("number") velocity = 5;
 }
 
 export class Player extends Schema {
@@ -16,6 +17,8 @@ export class Player extends Schema {
 
   @type("number") health = 5000;
   @type("boolean") isDead = false;
+
+  @type("boolean") cheat = false;
 
   @type({ map: Bullet }) bullets = new MapSchema<Bullet>();
 
