@@ -56,6 +56,7 @@ export class GameRoom extends Room<RoomState> {
       if (input.infiniteHealth) player.cheatInfiniteHealth = !player.cheatInfiniteHealth;
       if (input.invisibility) player.cheatInvisibility = !player.cheatInvisibility;
       if (input.reload) player.cheatReload = !player.cheatReload;
+      if (input.disableJoins) this.state.allowJoins = !this.state.allowJoins;
     });
 
     let elapsedTime = 0;
@@ -154,6 +155,11 @@ export class GameRoom extends Room<RoomState> {
   }
 
   onJoin(client: Client, _options: any) {
+    if (!this.state.allowJoins) {
+      client.leave();
+      return;
+    }
+
     console.log(client.sessionId, "joined!");
 
     const player = new Player();

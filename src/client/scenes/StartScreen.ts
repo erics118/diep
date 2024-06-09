@@ -1,15 +1,19 @@
 import Phaser from "phaser";
-import type { SceneData } from "../../shared/types";
+import { GRID_SIZE, MAP_SIZE } from "../../shared/config";
+import { colors } from "../../shared/style";
+import type { GameSceneData } from "../../shared/types";
 
 export class StartScreen extends Phaser.Scene {
   textEntry: Phaser.GameObjects.Text;
+
+  grid: Phaser.GameObjects.Grid;
 
   constructor() {
     super({ key: "selector", active: true });
   }
 
   preload() {
-    this.cameras.main.setBackgroundColor(0x000000);
+    this.cameras.main.setBackgroundColor(colors.background);
   }
 
   onKeydown(event: KeyboardEvent) {
@@ -28,39 +32,40 @@ export class StartScreen extends Phaser.Scene {
 
   startGame(username: string) {
     this.scene.stop("selector");
-    this.scene.start("diep", { username: username } as SceneData);
+    this.scene.start("diep", { username: username } as GameSceneData);
+  }
+
+  createBackground() {
+    this.grid = this.add.grid(MAP_SIZE / 2, MAP_SIZE / 2, MAP_SIZE, MAP_SIZE, GRID_SIZE, GRID_SIZE, colors.gridLines);
   }
 
   create() {
-    // immediately start game if username is present in url
     const urlParams = new URLSearchParams(window.location.search);
     const username = urlParams.get("u");
 
-    // if (username) {
-    //   const newUrl = window.location.pathname;
-    //   window.history.replaceState({}, document.title, newUrl);
-    //   this.startGame(username);
-    // }
+    this.input.keyboard.addCapture("SPACE");
+
+    this.createBackground();
 
     const textStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-      color: "#ff0000",
+      color: colors.username,
       fontSize: "32px",
       fontFamily: "Arial",
     };
 
-    this.add
-      .text(30, 100, "Start Game", textStyle)
-      .setInteractive()
-      .setPadding(6)
-      .on("pointerdown", this.startGame.bind(this));
+    this.add.text(this.game.scale.width / 2 - 200, (this.game.scale.height * 2) / 5, "Enter your name:", textStyle);
 
-    this.add.text(30, 300, "Enter your name:", textStyle);
-
-    this.textEntry = this.add.text(30, 500, "", textStyle);
+    this.textEntry = this.add.text(this.game.scale.width / 2 + 50, (this.game.scale.height * 2) / 5, "", textStyle);
 
     if (username) {
       this.textEntry.text = username;
     }
+
+    this.add
+      .text(this.game.scale.width / 2, (this.game.scale.height * 3) / 5, "Start Game", textStyle)
+      .setInteractive()
+      .setPadding(6)
+      .on("pointerdown", this.startGame.bind(this));
 
     this.input.keyboard.on("keydown", this.onKeydown.bind(this));
   }

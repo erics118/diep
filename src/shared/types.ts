@@ -12,6 +12,6 @@ export type Keys = {
   space: Phaser.Input.Keyboard.Key;
 };
 
-export type SceneData = {
+export type GameSceneData = {
   username: string;
 };

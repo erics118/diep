@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 
+import { EndScreen } from "./scenes/EndScreen";
 import { Game } from "./scenes/Game";
 import { StartScreen } from "./scenes/StartScreen";
 
@@ -16,7 +17,7 @@ const config: Phaser.Types.Core.GameConfig = {
   scale: {
     mode: Phaser.Scale.RESIZE,
   },
-  scene: [StartScreen, Game],
+  scene: [StartScreen, Game, EndScreen],
 };
 
 const game = new Phaser.Game(config);

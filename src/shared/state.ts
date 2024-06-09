@@ -33,6 +33,7 @@ export class Player extends Schema {
 export class RoomState extends Schema {
   @type("number") mapWidth: number;
   @type("number") mapHeight: number;
+  @type("boolean") allowJoins = true;
 
   @type({ map: Player }) players = new MapSchema<Player>();
 }

@@ -29,4 +29,5 @@ export type CheatMessage = {
   infiniteHealth?: boolean;
   invisibility?: boolean;
   reload?: boolean;
+  disableJoins?: boolean;
 };

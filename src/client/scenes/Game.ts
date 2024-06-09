@@ -10,7 +10,7 @@ import {
 } from "../../shared/message";
 import type { Bullet, Player, RoomState } from "../../shared/state";
 import { colors } from "../../shared/style";
-import type { Keys, SceneData } from "../../shared/types";
+import type { GameSceneData, Keys } from "../../shared/types";
 
 export enum Depth {
   Background = -2,
@@ -68,7 +68,7 @@ export class Game extends Phaser.Scene {
     super({ key: "diep" });
   }
 
-  init(data: SceneData) {
+  init(data: GameSceneData) {
     this.usernameStr = data.username || "Player";
   }
 
@@ -85,7 +85,6 @@ export class Game extends Phaser.Scene {
   }
 
   sendCheatMessage(msg: CheatMessage) {
-    console.log(msg);
     this.room.send(MessageType.CHEAT, msg);
   }
 
@@ -214,7 +213,7 @@ export class Game extends Phaser.Scene {
         false,
         "minimap",
       )
-      .setZoom((MINIMAP_SIZE * 2) / MAP_SIZE);
+      .setZoom(((MINIMAP_SIZE * 2) / MAP_SIZE) * 0.85);
 
     // keep only players on minimap
     this.minimap.ignore([this.debugMenu, this.grid, this.username, this.healthBar]);
@@ -227,33 +226,20 @@ export class Game extends Phaser.Scene {
   createMinimapContainer() {
     // Create a container for the main part of the scene
     this.minimapContainer = this.add
-      .container(
-        this.game.scale.width - MINIMAP_SIZE - 20,
-        this.game.scale.height - MINIMAP_SIZE - 20,
-      )
+      .container(this.game.scale.width - MINIMAP_SIZE - 20, this.game.scale.height - MINIMAP_SIZE - 20)
       .setScrollFactor(0);
 
     // Add some game objects to the main container
     this.minimapContainer.add(
       this.add
-        .rectangle(
-          MINIMAP_SIZE / 2,
-          MINIMAP_SIZE / 2,
-          MINIMAP_SIZE,
-          MINIMAP_SIZE,
-          colors.minimap.background,
-          0.2,
-        )
+        .rectangle(MINIMAP_SIZE / 2, MINIMAP_SIZE / 2, MINIMAP_SIZE, MINIMAP_SIZE, colors.minimap.background, 0.2)
         .setStrokeStyle(3, colors.minimap.border),
     );
   }
 
   // update minimap, username, and health bar position on window resize
   onResize() {
-    this.minimap.setPosition(
-      this.game.scale.width - MINIMAP_SIZE - 20,
-      this.game.scale.height - MINIMAP_SIZE - 20,
-    );
+    this.minimap.setPosition(this.game.scale.width - MINIMAP_SIZE - 20, this.game.scale.height - MINIMAP_SIZE - 20);
 
     this.minimapContainer.setPosition(
       this.game.scale.width - MINIMAP_SIZE - 20,
@@ -271,18 +257,12 @@ export class Game extends Phaser.Scene {
 
     // current player
     if (sessionId === this.room.sessionId) {
-      const entity = this.physics.add
-        .image(player.x, player.y, "playerCircle")
-        .setDepth(Depth.Players);
+      const entity = this.physics.add.image(player.x, player.y, "playerCircle").setDepth(Depth.Players);
 
       this.playerEntities[sessionId] = entity;
 
       const minimapEntity = this.physics.add
-        .image(
-          (player.x / MAP_SIZE) * MINIMAP_SIZE,
-          (player.y / MAP_SIZE) * MINIMAP_SIZE,
-          "minimapPlayer",
-        )
+        .image((player.x / MAP_SIZE) * MINIMAP_SIZE, (player.y / MAP_SIZE) * MINIMAP_SIZE, "minimapPlayer")
         .setDepth(Depth.Players);
 
       this.minimapPlayerEntities[sessionId] = minimapEntity;
@@ -312,16 +292,12 @@ export class Game extends Phaser.Scene {
       }
 
       player.bullets.onAdd((bullet: Bullet, bulletId) => {
-        const entity = this.physics.add
-          .image(bullet.x, bullet.y, "playerBullet")
-          .setDepth(Depth.Bullets);
+        const entity = this.physics.add.image(bullet.x, bullet.y, "playerBullet").setDepth(Depth.Bullets);
 
         this.bulletEntities[sessionId][bulletId] = entity;
       });
     } else {
-      const entity = this.physics.add
-        .image(player.x, player.y, "enemyCircle")
-        .setDepth(Depth.Players);
+      const entity = this.physics.add.image(player.x, player.y, "enemyCircle").setDepth(Depth.Players);
       this.playerEntities[sessionId] = entity;
 
       // listen for server updates
@@ -333,9 +309,7 @@ export class Game extends Phaser.Scene {
       });
 
       player.bullets.onAdd((bullet: Bullet, bulletId: string) => {
-        const entity = this.physics.add
-          .image(bullet.x, bullet.y, "enemyBullet")
-          .setDepth(Depth.Bullets);
+        const entity = this.physics.add.image(bullet.x, bullet.y, "enemyBullet").setDepth(Depth.Bullets);
 
         this.bulletEntities[sessionId][bulletId] = entity;
 
@@ -420,22 +394,11 @@ export class Game extends Phaser.Scene {
 
       this.input.keyboard.on("keydown-K", () => this.sendCheatMessage({ speed: true }), this);
       this.input.keyboard.on("keydown-O", () => this.sendCheatMessage({ bulletSpeed: true }), this);
-      this.input.keyboard.on(
-        "keydown-P",
-        () => this.sendCheatMessage({ bulletDamage: true }),
-        this,
-      );
-      this.input.keyboard.on(
-        "keydown-L",
-        () => this.sendCheatMessage({ infiniteHealth: true }),
-        this,
-      );
-      this.input.keyboard.on(
-        "keydown-I",
-        () => this.sendCheatMessage({ invisibility: true }),
-        this,
-      );
+      this.input.keyboard.on("keydown-P", () => this.sendCheatMessage({ bulletDamage: true }), this);
+      this.input.keyboard.on("keydown-L", () => this.sendCheatMessage({ infiniteHealth: true }), this);
+      this.input.keyboard.on("keydown-I", () => this.sendCheatMessage({ invisibility: true }), this);
       this.input.keyboard.on("keydown-J", () => this.sendCheatMessage({ reload: true }), this);
+      this.input.keyboard.on("keydown-ZERO", () => this.sendCheatMessage({ disableJoins: true }), this);
     }
 
     // update minimap position on window resize
@@ -446,8 +409,6 @@ export class Game extends Phaser.Scene {
     this.room.state.players.onAdd(this.onPlayerAdd.bind(this));
 
     this.room.state.players.onRemove(this.onPlayerRemove.bind(this));
-
-    // this.input.keyboard.on("keydown-SPACE", this.onKeydownSpace.bind(this), this);
 
     // register pointer move event
     this.input.on("pointermove", this.onPointerMove.bind(this));
@@ -503,6 +464,7 @@ export class Game extends Phaser.Scene {
         `\nRoom Id: ${this.room.roomId}` +
         `\nSession Id: ${this.room.sessionId}` +
         `\nNum players: ${this.room.state.players.size}` +
+        `\n${this.room.state.allowJoins ? "Joins enabled" : "Joins disabled"}` +
         `\n${cheatString}`;
     }
 
@@ -613,7 +575,7 @@ export class Game extends Phaser.Scene {
       }
     }
     this.scene.stop("diep");
-    this.scene.start("start");
+    this.scene.start("end");
   }
 
   handleBullet() {
