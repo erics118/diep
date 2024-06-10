@@ -1,21 +1,23 @@
 import { MapSchema, Schema, type } from "@colyseus/schema";
+import { BULLET_HEALTH, BULLET_VELOCITY, PLAYER_HEALTH, PLAYER_VELOCITY } from "./config";
 import type { MoveMessage } from "./message";
 
 export class Bullet extends Schema {
   @type("number") x: number;
   @type("number") y: number;
   @type("number") rotation: number;
-  @type("number") health = 500;
-  @type("number") velocity = 5;
+  @type("number") health = BULLET_HEALTH;
+  @type("number") velocity = BULLET_VELOCITY;
 }
 
 export class Player extends Schema {
   @type("number") x: number;
   @type("number") y: number;
   @type("number") rotation = 0;
-  @type("number") velocity = 2;
+  @type("number") velocity = PLAYER_VELOCITY;
 
-  @type("number") health = 5000;
+  @type("number") health = PLAYER_HEALTH;
+
   @type("boolean") isDead = false;
 
   @type("boolean") cheatSpeed = false;

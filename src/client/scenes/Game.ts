@@ -8,6 +8,7 @@ import {
   MAP_PADDING,
   MAP_SIZE,
   MINIMAP_SIZE,
+  PLAYER_HEALTH,
 } from "../../shared/config";
 import {
   type BulletMessage,
@@ -47,6 +48,7 @@ export class Game extends Phaser.Scene {
   debugMenu: Phaser.GameObjects.Text;
 
   healthText: Phaser.GameObjects.Text;
+
   healthBarInner: Phaser.GameObjects.Graphics;
   healthBarOuter: Phaser.GameObjects.Graphics;
 
@@ -65,6 +67,7 @@ export class Game extends Phaser.Scene {
   } = {};
 
   elapsedTime = 0;
+
   fixedTimeStep = 1000 / 60;
 
   currentTick = 0;
@@ -224,7 +227,7 @@ export class Game extends Phaser.Scene {
 
     // draw health bar
     this.healthText = this.add
-      .text(this.game.scale.width / 2, this.game.scale.height - 20, `Health: ${5000}`, {
+      .text(this.game.scale.width / 2, this.game.scale.height - 20, `Health: ${PLAYER_HEALTH}`, {
         color: colors.username,
         fontSize: "20px",
         fontFamily: "Arial",
@@ -248,9 +251,16 @@ export class Game extends Phaser.Scene {
       .setZoom(((MINIMAP_SIZE * 2) / MAP_SIZE) * 0.85);
 
     // keep only players on minimap
-    this.minimap.ignore([this.debugMenu, this.grid, this.username, this.healthText]);
+    this.minimap.ignore([
+      this.debugMenu,
+      this.grid,
+      this.username,
+      this.healthText,
+      this.healthBarInner,
+      this.healthBarOuter,
+    ]);
 
-    this.minimap.setBackgroundColor("rgb(80, 80, 80, 0.2)");
+    this.minimap.setBackgroundColor(colors.minimap.devBackground);
     this.minimap.scrollX = MAP_SIZE / 2;
     this.minimap.scrollY = MAP_SIZE / 2;
   }
@@ -258,20 +268,33 @@ export class Game extends Phaser.Scene {
   createMinimapContainer() {
     // Create a container for the main part of the scene
     this.minimapContainer = this.add
-      .container(this.game.scale.width - MINIMAP_SIZE - 20, this.game.scale.height - MINIMAP_SIZE - 20)
+      .container(
+        this.game.scale.width - MINIMAP_SIZE - 20,
+        this.game.scale.height - MINIMAP_SIZE - 20,
+      )
       .setScrollFactor(0);
 
     // Add some game objects to the main container
     this.minimapContainer.add(
       this.add
-        .rectangle(MINIMAP_SIZE / 2, MINIMAP_SIZE / 2, MINIMAP_SIZE, MINIMAP_SIZE, colors.minimap.background, 0.2)
+        .rectangle(
+          MINIMAP_SIZE / 2,
+          MINIMAP_SIZE / 2,
+          MINIMAP_SIZE,
+          MINIMAP_SIZE,
+          colors.minimap.background,
+          0.2,
+        )
         .setStrokeStyle(3, colors.minimap.border),
     );
   }
 
   // update minimap, username, and health bar position on window resize
   onResize() {
-    this.minimap.setPosition(this.game.scale.width - MINIMAP_SIZE - 20, this.game.scale.height - MINIMAP_SIZE - 20);
+    this.minimap.setPosition(
+      this.game.scale.width - MINIMAP_SIZE - 20,
+      this.game.scale.height - MINIMAP_SIZE - 20,
+    );
 
     this.minimapContainer.setPosition(
       this.game.scale.width - MINIMAP_SIZE - 20,
@@ -291,12 +314,18 @@ export class Game extends Phaser.Scene {
 
     // current player
     if (sessionId === this.room.sessionId) {
-      const entity = this.physics.add.image(player.x, player.y, "playerCircle").setDepth(Depth.Players);
+      const entity = this.physics.add
+        .image(player.x, player.y, "playerCircle")
+        .setDepth(Depth.Players);
 
       this.playerEntities[sessionId] = entity;
 
       const minimapEntity = this.physics.add
-        .image((player.x / MAP_SIZE) * MINIMAP_SIZE, (player.y / MAP_SIZE) * MINIMAP_SIZE, "minimapPlayer")
+        .image(
+          (player.x / MAP_SIZE) * MINIMAP_SIZE,
+          (player.y / MAP_SIZE) * MINIMAP_SIZE,
+          "minimapPlayer",
+        )
         .setDepth(Depth.Players);
 
       this.minimapPlayerEntities[sessionId] = minimapEntity;
@@ -326,12 +355,17 @@ export class Game extends Phaser.Scene {
       }
 
       player.bullets.onAdd((bullet: Bullet, bulletId) => {
-        const entity = this.physics.add.image(bullet.x, bullet.y, "playerBullet").setDepth(Depth.Bullets);
+        const entity = this.physics.add
+          .image(bullet.x, bullet.y, "playerBullet")
+          .setDepth(Depth.Bullets);
 
         this.bulletEntities[sessionId][bulletId] = entity;
       });
     } else {
-      const entity = this.physics.add.image(player.x, player.y, "enemyCircle").setDepth(Depth.Players);
+      const entity = this.physics.add
+        .image(player.x, player.y, "enemyCircle")
+        .setDepth(Depth.Players);
+
       this.playerEntities[sessionId] = entity;
 
       // listen for server updates
@@ -342,8 +376,12 @@ export class Game extends Phaser.Scene {
         entity.setData("serverRotation", player.rotation);
       });
 
+      console.log(player.bullets);
+
       player.bullets.onAdd((bullet: Bullet, bulletId: string) => {
-        const entity = this.physics.add.image(bullet.x, bullet.y, "enemyBullet").setDepth(Depth.Bullets);
+        const entity = this.physics.add
+          .image(bullet.x, bullet.y, "enemyBullet")
+          .setDepth(Depth.Bullets);
 
         this.bulletEntities[sessionId][bulletId] = entity;
 
@@ -428,11 +466,27 @@ export class Game extends Phaser.Scene {
 
       this.input.keyboard.on("keydown-K", () => this.sendCheatMessage({ speed: true }), this);
       this.input.keyboard.on("keydown-O", () => this.sendCheatMessage({ bulletSpeed: true }), this);
-      this.input.keyboard.on("keydown-P", () => this.sendCheatMessage({ bulletDamage: true }), this);
-      this.input.keyboard.on("keydown-L", () => this.sendCheatMessage({ infiniteHealth: true }), this);
-      this.input.keyboard.on("keydown-I", () => this.sendCheatMessage({ invisibility: true }), this);
+      this.input.keyboard.on(
+        "keydown-P",
+        () => this.sendCheatMessage({ bulletDamage: true }),
+        this,
+      );
+      this.input.keyboard.on(
+        "keydown-L",
+        () => this.sendCheatMessage({ infiniteHealth: true }),
+        this,
+      );
+      this.input.keyboard.on(
+        "keydown-I",
+        () => this.sendCheatMessage({ invisibility: true }),
+        this,
+      );
       this.input.keyboard.on("keydown-J", () => this.sendCheatMessage({ reload: true }), this);
-      this.input.keyboard.on("keydown-ZERO", () => this.sendCheatMessage({ disableJoins: true }), this);
+      this.input.keyboard.on(
+        "keydown-ZERO",
+        () => this.sendCheatMessage({ disableJoins: true }),
+        this,
+      );
     }
 
     // update minimap position on window resize
@@ -452,7 +506,7 @@ export class Game extends Phaser.Scene {
     // add connection status text
     const connectionStatusText = this.add
       .text(0, 0, "Trying to connect with the server...")
-      .setStyle({ color: "#ff0000" })
+      .setStyle({ color: colors.debug.text })
       .setPadding(4)
       .setDepth(Depth.Overlay);
 
@@ -511,7 +565,7 @@ export class Game extends Phaser.Scene {
     const velocity = player.cheatSpeed ? 5 : player.velocity;
 
     // set health bar
-    this.healthBarInner.scaleX = player.health / 5000;
+    this.healthBarInner.scaleX = player.health / PLAYER_HEALTH;
 
     // move player
     if (msg.left) {

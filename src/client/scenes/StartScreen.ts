@@ -20,12 +20,8 @@ export class StartScreen extends Phaser.Scene {
     if (event.key === "Enter") {
       this.startGame(this.textEntry.text);
     } else if (event.key === "Backspace") {
-      this.textEntry.text = this.textEntry.text.substring(0, this.textEntry.text.length - 1);
-    } else if (
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`1234567890-=[]\\;',./~!@#$%^&*()_+{}|:\"<>? ".includes(
-        event.key,
-      )
-    ) {
+      this.textEntry.text = this.textEntry.text.slice(0, -1);
+    } else if (event.key.length === 1) {
       this.textEntry.text += event.key;
     }
   }
@@ -36,7 +32,15 @@ export class StartScreen extends Phaser.Scene {
   }
 
   createBackground() {
-    this.grid = this.add.grid(MAP_SIZE / 2, MAP_SIZE / 2, MAP_SIZE, MAP_SIZE, GRID_SIZE, GRID_SIZE, colors.gridLines);
+    this.grid = this.add.grid(
+      MAP_SIZE / 2,
+      MAP_SIZE / 2,
+      MAP_SIZE,
+      MAP_SIZE,
+      GRID_SIZE,
+      GRID_SIZE,
+      colors.gridLines,
+    );
   }
 
   create() {
@@ -54,7 +58,12 @@ export class StartScreen extends Phaser.Scene {
     };
 
     this.add
-      .text(this.game.scale.width / 2, (this.game.scale.height * 2) / 5, "Enter your name:", textStyle)
+      .text(
+        this.game.scale.width / 2,
+        (this.game.scale.height * 2) / 5,
+        "Enter your name:",
+        textStyle,
+      )
       .setOrigin(0.5, 0.5);
 
     this.textEntry = this.add
@@ -62,7 +71,12 @@ export class StartScreen extends Phaser.Scene {
       .setOrigin(0.5, 0.5);
 
     this.add
-      .text(this.game.scale.width / 2, (this.game.scale.height * 2) / 5 + 120, "Start Game", textStyle)
+      .text(
+        this.game.scale.width / 2,
+        (this.game.scale.height * 2) / 5 + 120,
+        "Start Game",
+        textStyle,
+      )
       .setInteractive()
       .setPadding(6)
       .setOrigin(0.5, 0.5)

@@ -89,6 +89,8 @@ export class GameRoom extends Room<RoomState> {
           player.y += velocity;
         }
       }
+
+      // check borders
       if (player.x < MAP_PADDING) {
         player.x = MAP_PADDING;
       }
@@ -128,7 +130,7 @@ export class GameRoom extends Room<RoomState> {
 
           if (distance <= 25) {
             // kill target
-            if (player.cheatBulletDamage) {
+            if (player.cheatBulletDamage && !target.cheatInfiniteHealth) {
               target.isDead = true;
               continue;
             }

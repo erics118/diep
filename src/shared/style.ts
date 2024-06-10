@@ -1,6 +1,7 @@
 export const colors = {
   username: "rgba(0, 0, 0, 0.5)",
   minimap: {
+    devBackground: "rgba(80, 80, 80, 0.2)",
     background: 0x505050,
     border: 0x797979,
     player: 0x3d3d3d,

@@ -16,7 +16,15 @@ export class EndScreen extends Phaser.Scene {
   }
 
   createBackground() {
-    this.grid = this.add.grid(MAP_SIZE / 2, MAP_SIZE / 2, MAP_SIZE, MAP_SIZE, GRID_SIZE, GRID_SIZE, colors.gridLines);
+    this.grid = this.add.grid(
+      MAP_SIZE / 2,
+      MAP_SIZE / 2,
+      MAP_SIZE,
+      MAP_SIZE,
+      GRID_SIZE,
+      GRID_SIZE,
+      colors.gridLines,
+    );
   }
 
   create() {
@@ -28,6 +36,8 @@ export class EndScreen extends Phaser.Scene {
       fontFamily: "Arial",
     };
 
-    this.add.text(this.game.scale.width / 2, this.game.scale.height / 2, "YOU DIED", textStyle).setOrigin(0.5, 0.5);
+    this.add
+      .text(this.game.scale.width / 2, this.game.scale.height / 2, "YOU DIED", textStyle)
+      .setOrigin(0.5, 0.5);
   }
 }
