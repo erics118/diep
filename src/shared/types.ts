@@ -18,4 +18,5 @@ export type GameSceneData = {
 
 export type JoinGameOptions = {
   username: string;
+  devMode: boolean;
 };

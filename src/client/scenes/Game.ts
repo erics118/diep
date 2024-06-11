@@ -533,6 +533,7 @@ export class Game extends Phaser.Scene {
     try {
       this.room = await client.joinOrCreate("diep_room", {
         username: this.usernameStr,
+        devMode: this.devMode,
       } as JoinGameOptions);
 
       // connection successful

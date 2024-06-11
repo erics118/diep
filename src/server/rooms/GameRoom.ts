@@ -158,7 +158,7 @@ export class GameRoom extends Room<RoomState> {
   }
 
   onJoin(client: Client, options: JoinGameOptions) {
-    if (!this.state.allowJoins) {
+    if (!this.state.allowJoins && !options.devMode) {
       client.leave();
       return;
     }
