@@ -14,8 +14,8 @@ export default config({
     gameServer.define("diep_room", GameRoom);
   },
 
+  // custom express routes
   initializeExpress: (app) => {
-    // custom express routes
     app.get("/", (_req, res) => {
       res.sendFile(path.join(__dirname, "../../public/server.html"));
     });

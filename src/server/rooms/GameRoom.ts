@@ -8,6 +8,7 @@ import {
   type RotateMessage,
 } from "../../shared/message";
 import { Bullet, Player, RoomState } from "../../shared/state";
+import type { JoinGameOptions } from "../../shared/types";
 
 export class GameRoom extends Room<RoomState> {
   fixedTimeStep = 1000 / 60;
@@ -156,7 +157,7 @@ export class GameRoom extends Room<RoomState> {
     }
   }
 
-  onJoin(client: Client, _options: any) {
+  onJoin(client: Client, options: JoinGameOptions) {
     if (!this.state.allowJoins) {
       client.leave();
       return;
@@ -168,6 +169,7 @@ export class GameRoom extends Room<RoomState> {
 
     player.x = Math.random() * (MAP_SIZE - 4 * MAP_PADDING) + 2 * MAP_PADDING;
     player.y = Math.random() * (MAP_SIZE - 4 * MAP_PADDING) + 2 * MAP_PADDING;
+    player.username = options.username;
 
     this.state.players.set(client.sessionId, player);
   }

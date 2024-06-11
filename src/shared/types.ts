@@ -15,3 +15,7 @@ export type Keys = {
 export type GameSceneData = {
   username: string;
 };
+
+export type JoinGameOptions = {
+  username: string;
+};

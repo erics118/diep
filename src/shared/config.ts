@@ -1,4 +1,4 @@
-export const IP_ADDRESS = "10.3.131.95";
+export const IP_ADDRESS = "192.168.68.111";
 
 export const BACKEND_URL = `ws://${IP_ADDRESS}:2567`;
 

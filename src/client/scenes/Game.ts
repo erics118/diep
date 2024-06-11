@@ -19,7 +19,7 @@ import {
 } from "../../shared/message";
 import type { Bullet, Player, RoomState } from "../../shared/state";
 import { colors } from "../../shared/style";
-import type { GameSceneData, Keys } from "../../shared/types";
+import type { GameSceneData, JoinGameOptions, Keys } from "../../shared/types";
 
 export enum Depth {
   Background = -2,
@@ -64,6 +64,10 @@ export class Game extends Phaser.Scene {
   minimapContainer: Phaser.GameObjects.Container;
   minimapPlayerEntities: {
     [sessionId: string]: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+  } = {};
+
+  usernameEntities: {
+    [sessionId: string]: Phaser.GameObjects.Text;
   } = {};
 
   elapsedTime = 0;
@@ -368,6 +372,15 @@ export class Game extends Phaser.Scene {
 
       this.playerEntities[sessionId] = entity;
 
+      this.usernameEntities[sessionId] = this.add
+        .text(player.x, player.y - 45, player.username, {
+          color: colors.username,
+          fontSize: "16px",
+          fontFamily: "Arial",
+        })
+        .setOrigin(0.5, 0)
+        .setDepth(Depth.Overlay);
+
       // listen for server updates
       player.onChange(() => {
         // LERP the positions during the render loop.
@@ -375,8 +388,6 @@ export class Game extends Phaser.Scene {
         entity.setData("serverY", player.y);
         entity.setData("serverRotation", player.rotation);
       });
-
-      console.log(player.bullets);
 
       player.bullets.onAdd((bullet: Bullet, bulletId: string) => {
         const entity = this.physics.add
@@ -396,10 +407,17 @@ export class Game extends Phaser.Scene {
   // remove local reference when entity is removed from the server
   onPlayerRemove(_player: Player, sessionId: string) {
     // remove player
-    const entity = this.playerEntities[sessionId];
-    if (entity) {
-      entity.destroy();
+    const playerEntity = this.playerEntities[sessionId];
+    if (playerEntity) {
+      playerEntity.destroy();
       delete this.playerEntities[sessionId];
+    }
+
+    // remove username
+    const usernameEntity = this.usernameEntities[sessionId];
+    if (usernameEntity) {
+      usernameEntity.destroy();
+      delete this.usernameEntities[sessionId];
     }
 
     // remove bullets
@@ -513,7 +531,9 @@ export class Game extends Phaser.Scene {
     const client = new Client(BACKEND_URL);
 
     try {
-      this.room = await client.joinOrCreate("diep_room", {});
+      this.room = await client.joinOrCreate("diep_room", {
+        username: this.usernameStr,
+      } as JoinGameOptions);
 
       // connection successful
       connectionStatusText.destroy();
@@ -624,20 +644,29 @@ export class Game extends Phaser.Scene {
         continue;
       }
 
-      const entity = this.playerEntities[sessionId];
+      const playerEntity = this.playerEntities[sessionId];
+      const usernameEntity = this.usernameEntities[sessionId];
 
       if (player.isDead) {
         this.onPlayerRemove(player, sessionId);
         continue;
       }
 
-      entity.setVisible(!player.cheatInvisibility);
+      if (this.devMode) {
+        playerEntity.setAlpha(player.cheatInvisibility ? 0.3 : 1);
+      } else {
+        playerEntity.setVisible(!player.cheatInvisibility);
+        this.usernameEntities[sessionId].setVisible(!player.cheatInvisibility);
+      }
 
-      const { serverX, serverY, serverRotation } = entity.data.values;
+      const { serverX, serverY, serverRotation } = playerEntity.data.values;
 
-      entity.x = Phaser.Math.Linear(entity.x, serverX, 0.2);
-      entity.y = Phaser.Math.Linear(entity.y, serverY, 0.2);
-      entity.rotation = serverRotation;
+      playerEntity.x = Phaser.Math.Linear(playerEntity.x, serverX, 0.2);
+      playerEntity.y = Phaser.Math.Linear(playerEntity.y, serverY, 0.2);
+      playerEntity.rotation = serverRotation;
+
+      usernameEntity.x = Phaser.Math.Linear(playerEntity.x, serverX, 0.2);
+      usernameEntity.y = Phaser.Math.Linear(playerEntity.y - 45, serverY - 45, 0.2);
 
       // move bullets
       for (const [bulletId, entity] of Object.entries(this.bulletEntities[sessionId])) {

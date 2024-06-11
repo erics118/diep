@@ -6,17 +6,20 @@ export class Bullet extends Schema {
   @type("number") x: number;
   @type("number") y: number;
   @type("number") rotation: number;
-  @type("number") health = BULLET_HEALTH;
-  @type("number") velocity = BULLET_VELOCITY;
+
+  @type("number") health: number = BULLET_HEALTH;
+  @type("number") velocity: number = BULLET_VELOCITY;
 }
 
 export class Player extends Schema {
   @type("number") x: number;
   @type("number") y: number;
   @type("number") rotation = 0;
-  @type("number") velocity = PLAYER_VELOCITY;
+  @type("number") velocity: number = PLAYER_VELOCITY;
 
-  @type("number") health = PLAYER_HEALTH;
+  @type("string") username: string;
+
+  @type("number") health: number = PLAYER_HEALTH;
 
   @type("boolean") isDead = false;
 
