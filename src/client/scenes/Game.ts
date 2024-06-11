@@ -1,7 +1,6 @@
 import { Client, type Room } from "colyseus.js";
 import Phaser from "phaser";
 import {
-  BACKEND_URL,
   DEV_KEY,
   GRID_SIZE,
   HEALTH_BAR_WIDTH,
@@ -528,7 +527,8 @@ export class Game extends Phaser.Scene {
       .setPadding(4)
       .setDepth(Depth.Overlay);
 
-    const client = new Client(BACKEND_URL);
+    const url = `ws://${window.location.hostname}:2567`;
+    const client = new Client(url);
 
     try {
       this.room = await client.joinOrCreate("diep_room", {

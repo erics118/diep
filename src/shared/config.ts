@@ -1,9 +1,3 @@
-export const IP_ADDRESS = process.env.IP_ADDRESS || "192.168.68.111";
-
-export const BACKEND_URL = `ws://${IP_ADDRESS}:2567`;
-
-export const BACKEND_HTTP_URL = `http://${IP_ADDRESS}:2567`;
-
 export const MAP_SIZE = 2000;
 
 export const MAP_PADDING = 40;
